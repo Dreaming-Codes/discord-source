@@ -1,0 +1,15 @@
+<style>
+    #video {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+    }
+</style>
+<video id="video" autoplay muted playsinline></video>
+<script type="text/javascript">
+    const video = document.getElementById('video');
+
+    const ws = new WebSocket('ws://localhost:' + window.env.wsPort);
+</script>

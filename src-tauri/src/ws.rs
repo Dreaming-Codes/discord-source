@@ -15,9 +15,9 @@ impl WebSocketServer {
         }
     }
 
-    pub async fn bind(&mut self, addr: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let listener = TcpListener::bind(addr).await?;
+    pub async fn bind(&mut self, addr: String) -> Result<(), Box<dyn std::error::Error>> {
         info!("WS server listening on: {}", addr);
+        let listener = TcpListener::bind(addr).await?;
 
         self.listener = Some(listener);
         Ok(())
