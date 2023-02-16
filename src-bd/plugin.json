@@ -1,0 +1,6 @@
+{
+  "name": "Discord source",
+  "author": "DreamingCodes",
+  "description": "Plugin that allows you to capture discord streams with OBS",
+  "version": "1.0.0"
+}

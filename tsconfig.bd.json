@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx",
+    "types": [
+      "node",
+      "bundlebd"
+    ]
+  },
+  "include": [
+    "src-bd/**/*",
+  ]
+}
