@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalDependencies">
+    <plugin id="Git4Idea" />
+    <plugin id="HtmlTools" />
+    <plugin id="JSIntentionPowerPack" />
+    <plugin id="JavaScript" />
+    <plugin id="JavaScriptDebugger" />
+    <plugin id="NodeJS" />
+    <plugin id="intellij.vitejs" />
+    <plugin id="mobi.hsz.idea.gitignore" />
+    <plugin id="org.intellij.plugins.markdown" />
+    <plugin id="org.jetbrains.plugins.github" />
+    <plugin id="org.jetbrains.plugins.vue" />
+    <plugin id="org.rust.lang" />
+  </component>
+</project>
