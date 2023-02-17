@@ -11,5 +11,5 @@
 <script type="text/javascript">
     const video = document.getElementById('video');
 
-    const ws = new WebSocket('ws://localhost:' + window.env.wsPort);
+    const ws = new WebSocket(`ws://localhost:${window.ws_port}?role=viewer&stream=${window.location.pathname[1]}`);
 </script>

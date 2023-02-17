@@ -1,39 +1,35 @@
-use std::collections::HashMap;
 use tokio::fs;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tracing::info;
 
 pub struct WebServer {
     listener: Option<TcpListener>,
-    env: HashMap<String, String>,
-    html: Option<String>
+    html: Option<String>,
 }
 
 impl WebServer {
-    pub fn new(env: HashMap<String, String>) -> Self {
+    pub fn new() -> Self {
         Self {
             listener: None,
-            env,
-            html: None
+            html: None,
         }
     }
 
-    pub async fn build_html(&mut self) {
-        let env = self.env.iter().map(|(k, v)| format!("{}:{},", k, v)).collect::<Vec<String>>().join("");
 
-        println!("env: {}", env);
+    pub async fn bind(&mut self, port: u16, ws_port: u16) -> Result<(), Box<dyn std::error::Error>> {
+        info!("Webserver server listening on: {}", port);
+        let listener_task = TcpListener::bind(format!("0.0.0.0:{}", port));
+        let html_task = tokio::spawn(async move {
+            let env_definitions = format!("<script>window.ws_port = {ws_port};</script>\n");
 
-        let env_definitions = format!("<script>window.env = {{{env}}};</script>\n");
+            format!("{}{}", env_definitions, fs::read_to_string("web/index.html").await.unwrap())
+        });
 
-        self.html = Some(format!("{}{}", env_definitions, fs::read_to_string("web/index.html").await.unwrap()));
-    }
+        let (listener, html) = tokio::join!(listener_task, html_task);
 
-    pub async fn bind(&mut self, addr: String) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Webserver server listening on: {}", addr);
-        let listener = TcpListener::bind(addr).await?;
-
-        self.listener = Some(listener);
+        self.listener = Some(listener?);
+        self.html = Some(html.unwrap());
         Ok(())
     }
 
@@ -47,8 +43,8 @@ impl WebServer {
 }
 
 async fn handle_connection(mut stream: TcpStream, contents: String) {
-    let buf_reader = BufReader::new(&mut stream);
-    let http_request = buf_reader.lines().next_line().await.unwrap().unwrap();
+    //let buf_reader = BufReader::new(&mut stream);
+    //let http_request = buf_reader.lines().next_line().await.unwrap().unwrap();
 
     let status_line = "HTTP/1.1 200 OK";
 
