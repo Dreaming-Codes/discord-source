@@ -1,5 +1,4 @@
 import {Utils} from "./Utils";
-import DiscordSourcePlugin from "../index";
 import {WS} from "./WS";
 
 export class VideoManager {
@@ -11,8 +10,12 @@ export class VideoManager {
     }
 
 
+    //TODO: add support for picture-in-picture
+    /**
+     * This function is called when a new RTC_CONNECTION_VIDEO event is dispatched, and it's used to save the video element for future use and send it to the desktop app
+     */
     public async onVideoStream(event: any) {
-        //TODO: add support for picture-in-picture
+        //If the streamId is null, it means that the video has ended
         if (!event.streamId) {
             Utils.log(`Video ended for ${event.userId}`);
             this.videos.forEach((video, videoId) => {

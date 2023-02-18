@@ -5,6 +5,9 @@ export class WS {
         this.ws = new WebSocket(`ws://localhost:${port}/?role=discord`);
     }
 
+    /**
+     * Wait for the websocket to connect
+     */
     public async connect(): Promise<boolean> {
         return new Promise(resolve => {
             if (this.ws.readyState === WebSocket.OPEN) {
@@ -19,6 +22,9 @@ export class WS {
         })
     }
 
+    /**
+     * Send a new video stream to the desktop app
+     */
     public sendNewVideoStream(streamId: number, userId: string) {
         this.ws.send(JSON.stringify({
             operation: "add",
@@ -27,6 +33,9 @@ export class WS {
         }));
     }
 
+    /**
+     * Send a remove video stream to the desktop app
+     */
     public sendRemoveVideoStream(streamId: number) {
         this.ws.send(JSON.stringify({
             operation: "remove",
