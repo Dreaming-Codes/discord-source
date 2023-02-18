@@ -35,6 +35,8 @@ impl WebSocketServer {
 async fn accept_connection(stream: TcpStream) {
     let addr = stream.peer_addr().expect("connected streams should have a peer address");
     info!("Peer address: {}", addr);
+    info!("Stream: {:?}", stream.local_addr());
+
 
     let ws_stream = tokio_tungstenite::accept_async(stream)
         .await
