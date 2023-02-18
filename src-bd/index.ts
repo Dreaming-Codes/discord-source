@@ -1,31 +1,51 @@
-import {waitForElm} from "./utils";
+import {WS} from "./classes/WS";
+import {Settings} from "./classes/Settings";
+import {Utils} from "./classes/Utils";
+import {VideoManager} from "./classes/VideoManager";
 
-export default class DiscordSourcePlugin{
+export default class DiscordSourcePlugin {
     private Dispatcher = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("dispatch", "register"));
+    private videoManager: VideoManager;
 
-    start() {
-        this.Dispatcher.subscribe("RTC_CONNECTION_VIDEO", this.onVideoStream);
-        DiscordSourcePlugin.log("Plugin started");
-    }
+    async start() {
+        if (!Settings.getPort()) {
+            await Utils.asyncShowConfirmationModal("Discord Source", "Settings not found, please install the plugin from the Discord Source desktop app", {
+                danger: true,
+                confirmText: "Open Discord Source website",
+                cancelText: "Disable plugin",
+                onConfirm: () => {
+                    window.open("https://github.com/Dreaming-Codes/discord-source");
+                },
+            })
 
-    async onVideoStream(event: any) {
-        //TODO: add support for picture-in-picture
-        if(!event.streamId){
-            DiscordSourcePlugin.log(`Video ended for ${event.userId}`);
+            BdApi.Plugins.disable(DiscordSourcePlugin.name);
             return;
         }
 
-        DiscordSourcePlugin.log(`Video ${event.streamId} started from ${event.userId}, waiting for video element...`);
-        const video = await waitForElm(`[data-selenium-video-tile="${event.userId}"] video`) as HTMLVideoElement;
-        DiscordSourcePlugin.log(`Found video element for ${event.streamId} from ${event.userId}!`);
-    }
+        Utils.log("Connecting to Discord Source...");
+        const ws = new WS(Settings.getPort());
+        if (!await ws.connect()) {
+            await Utils.asyncShowConfirmationModal("Discord Source", "Failed to connect to Discord Source, please make sure that the app is started", {
+                danger: true,
+                confirmText: "Open Discord Source website",
+                cancelText: "Disable plugin",
+                onConfirm: () => {
+                    window.open("https://github.com/Dreaming-Codes/discord-source");
+                }
+            });
 
-    static log(...msg: any[]) {
-        console.log("%c[DiscordSourcePlugin]", 'color: #bada55', ...msg);
+            BdApi.Plugins.disable(DiscordSourcePlugin.name);
+            return;
+        }
+
+        this.videoManager = new VideoManager(ws);
+
+        this.Dispatcher.subscribe("RTC_CONNECTION_VIDEO", this.videoManager.onVideoStream);
+        Utils.log("Plugin started");
     }
 
     stop() {
-        this.Dispatcher.unsubscribe("RTC_CONNECTION_VIDEO", this.onVideoStream);
-        DiscordSourcePlugin.log("Plugin stopped");
+        this.Dispatcher.unsubscribe("RTC_CONNECTION_VIDEO", this.videoManager.onVideoStream);
+        Utils.log("Plugin stopped");
     }
 }
