@@ -1,13 +1,14 @@
 use std::collections::HashMap;
+use futures_util::StreamExt;
 
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
-use tracing::info;
+use tracing::{info, warn};
 
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
-    web_connections: HashMap<u16, WebSocketStream<TcpStream>>,
+    web_connections: HashMap<String, WebSocketStream<TcpStream>>,
     discord_connection: Option<WebSocketStream<TcpStream>>,
 }
 
@@ -44,18 +45,39 @@ impl WebSocketServer {
             if uri == "/discord" {
                 self.discord_connection = Some(ws_stream);
                 info!("Discord connection established");
-            } else {
-                let id = uri.split("/").last().unwrap().parse::<u16>();
-                let id = match id {
-                    Ok(id) => id,
-                    Err(_) => {
-                        info!("Received invalid ws connection: {}", uri);
-                        ws_stream.close(None).await?;
-                        continue;
+
+                loop {
+                    let msg = self.discord_connection.as_mut().unwrap().next().await;
+                    if msg.unwrap().unwrap().is_close() {
+                        warn!("Discord connection closed");
+                        self.discord_connection = None;
+                        break;
                     }
-                };
+                }
+            } else {
+                let id = uri.split("/").last().unwrap();
+                if id.len() < 1 {
+                    warn!("Invalid web connection request: {}", uri);
+                    ws_stream.close(None).await?;
+                    continue;
+                }
+                if self.web_connections.contains_key(id) {
+                    warn!("Web connection already exists: {}", id);
+                    ws_stream.close(None).await?;
+                    continue;
+                }
+
                 info!("Web connection established: {}", id);
-                self.web_connections.insert(id, ws_stream);
+                self.web_connections.insert(id.to_string(), ws_stream);
+
+                loop {
+                    let msg = self.web_connections.get_mut(id).unwrap().next().await;
+                    if msg.unwrap().unwrap().is_close() {
+                        warn!("Web connection closed: {}", id);
+                        self.web_connections.remove(id);
+                        break;
+                    }
+                }
             }
         }
     }
