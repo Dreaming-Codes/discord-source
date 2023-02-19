@@ -1,8 +1,9 @@
 use std::collections::HashMap;
+
 use tokio::net::{TcpListener, TcpStream};
-use tracing::{info};
-use tokio_tungstenite::{WebSocketStream};
+use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
+use tracing::info;
 
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
@@ -33,7 +34,7 @@ impl WebSocketServer {
 
             let mut uri = String::new();
 
-            let ws_stream = tokio_tungstenite::accept_hdr_async(raw_tcp_stream, |request: &Request, response: Response| -> Result<Response, ErrorResponse> {
+            let mut ws_stream = tokio_tungstenite::accept_hdr_async(raw_tcp_stream, |request: &Request, response: Response| -> Result<Response, ErrorResponse> {
                 info!("WS connection request: {:?}", request.uri());
                 uri = request.uri().to_string();
 
@@ -44,7 +45,15 @@ impl WebSocketServer {
                 self.discord_connection = Some(ws_stream);
                 info!("Discord connection established");
             } else {
-                let id = uri.split("/").last().unwrap().parse::<u16>().unwrap();
+                let id = uri.split("/").last().unwrap().parse::<u16>();
+                let id = match id {
+                    Ok(id) => id,
+                    Err(_) => {
+                        info!("Received invalid ws connection: {}", uri);
+                        ws_stream.close(None).await?;
+                        continue;
+                    }
+                };
                 info!("Web connection established: {}", id);
                 self.web_connections.insert(id, ws_stream);
             }
