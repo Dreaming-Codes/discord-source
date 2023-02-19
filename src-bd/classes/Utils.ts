@@ -34,12 +34,16 @@ export class Utils {
             const oldOnCancel = args[2].onCancel;
 
             args[2].onConfirm = () => {
-                oldOnConfirm();
+                if(oldOnConfirm){
+                    oldOnConfirm();
+                }
                 resolve(true);
             }
 
             args[2].onCancel = () => {
-                oldOnCancel();
+                if(oldOnCancel){
+                    oldOnCancel();
+                }
                 resolve(false);
             }
 

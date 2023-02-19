@@ -1,4 +1,4 @@
-class TypedEventTarget<EventDef extends { type: any }> extends EventTarget {
+export class TypedEventTarget<EventDef extends { type: any }> extends EventTarget {
     public dispatchEvent(e: Event & EventDef): boolean {
         return super.dispatchEvent(e);
     }

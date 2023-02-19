@@ -46,6 +46,7 @@ export default class DiscordSourcePlugin {
 
     stop() {
         this.Dispatcher.unsubscribe("RTC_CONNECTION_VIDEO", this.videoManager.onVideoStream);
+        this.videoManager.stop();
         Utils.log("Plugin stopped");
     }
 }

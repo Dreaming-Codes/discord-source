@@ -1,4 +1,5 @@
 import {Utils} from "./Utils";
+import {TypedEventTarget} from "./TypedEventTarget";
 
 export type StartStreamEvent = {
     readonly type: 'startCaptureStream',
@@ -16,7 +17,7 @@ export class WS extends TypedEventTarget<WSEvent>{
 
     constructor(private port: number) {
         super();
-        this.ws = new WebSocket(`ws://localhost:${port}/?role=discord`);
+        this.ws = new WebSocket(`ws://localhost:${port}/discord`);
         this.ws.addEventListener("message", this.eventHandler);
     }
 
@@ -35,6 +36,13 @@ export class WS extends TypedEventTarget<WSEvent>{
                 resolve(true);
             });
         })
+    }
+
+    /**
+     * Close the websocket connection
+     */
+    public async close() {
+        this.ws.close();
     }
 
     /**

@@ -42,6 +42,11 @@ export class VideoManager {
         this.ws.sendNewVideoStream(event.streamId, event.userId);
     }
 
+    public async stop() {
+        await this.ws.close();
+        this.streams.forEach(stream => stream.close());
+    }
+
     private onRequestCaptureVideoStream(event: Event & StartStreamEvent) {
         const video = this.videos.get(event.streamId);
         if (!video) return;
