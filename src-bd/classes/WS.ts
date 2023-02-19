@@ -1,8 +1,23 @@
-export class WS {
+import {Utils} from "./Utils";
+
+export type StartStreamEvent = {
+    readonly type: 'startCaptureStream',
+    readonly streamId: number,
+};
+export type EndStreamEvent = {
+    readonly type: 'endCaptureStream'
+    readonly streamId: number,
+};
+
+type WSEvent = StartStreamEvent | EndStreamEvent;
+
+export class WS extends TypedEventTarget<WSEvent>{
     private ws: WebSocket;
 
     constructor(private port: number) {
+        super();
         this.ws = new WebSocket(`ws://localhost:${port}/?role=discord`);
+        this.ws.addEventListener("message", this.eventHandler);
     }
 
     /**
@@ -27,7 +42,7 @@ export class WS {
      */
     public sendNewVideoStream(streamId: number, userId: string) {
         this.ws.send(JSON.stringify({
-            operation: "add",
+            type: "add",
             userId,
             streamId
         }));
@@ -38,8 +53,43 @@ export class WS {
      */
     public sendRemoveVideoStream(streamId: number) {
         this.ws.send(JSON.stringify({
-            operation: "remove",
+            type: "remove",
             streamId
         }));
+    }
+
+    public sendICECandidate(streamId: number, candidate: RTCIceCandidate) {
+        this.ws.send(JSON.stringify({
+            type: "ice",
+            streamId,
+            candidate
+        }));
+    }
+
+    public sendAnswer(streamId: number, answer: RTCSessionDescription) {
+        this.ws.send(JSON.stringify({
+            type: "answer",
+            streamId,
+            answer
+        }));
+    }
+
+    private eventHandler(event: MessageEvent<any>) {
+        switch (event.data.operation) {
+            case "startCaptureStream":
+                this.dispatch({
+                    type: "startCaptureStream",
+                    streamId: event.data.streamId
+                });
+                break;
+            case "endCaptureStream":
+                this.dispatch({
+                    type: "endCaptureStream",
+                    streamId: event.data.streamId
+                })
+                break;
+            default:
+                Utils.warn("Unknown operation", event.data.operation);
+        }
     }
 }

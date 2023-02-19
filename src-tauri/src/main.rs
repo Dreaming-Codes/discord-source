@@ -38,7 +38,7 @@ fn main() {
 fn bind_servers(mut ws_server: WebSocketServer, mut web_server: WebServer, ws_port: u16, web_port: u16) {
     tauri::async_runtime::spawn(async move {
         ws_server.bind(ws_port.clone()).await.expect("Failed to bind WS server");
-        ws_server.run().await;
+        ws_server.accept_connections().await.expect("TODO: panic message");
     });
     tauri::async_runtime::spawn(async move {
         web_server.bind(web_port, ws_port).await.expect("Failed to bind Web server");

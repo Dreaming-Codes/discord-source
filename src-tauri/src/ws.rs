@@ -1,17 +1,21 @@
-use std::future;
+use std::collections::HashMap;
 use tokio::net::{TcpListener, TcpStream};
-use tracing::info;
-use futures_util::stream::StreamExt;
-use futures_util::TryStreamExt;
+use tracing::{info};
+use tokio_tungstenite::{WebSocketStream};
+use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
+    web_connections: HashMap<u16, WebSocketStream<TcpStream>>,
+    discord_connection: Option<WebSocketStream<TcpStream>>,
 }
 
 impl WebSocketServer {
     pub fn new() -> Self {
         Self {
             listener: None,
+            discord_connection: None,
+            web_connections: HashMap::new(),
         }
     }
 
@@ -23,31 +27,28 @@ impl WebSocketServer {
         Ok(())
     }
 
-    pub async fn run(&self) {
-        if let Some(listener) = &self.listener {
-            while let Ok((stream, _)) = listener.accept().await {
-                tauri::async_runtime::spawn(accept_connection(stream));
+    pub async fn accept_connections(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        loop {
+            let (raw_tcp_stream, _) = self.listener.as_ref().unwrap().accept().await?;
+
+            let mut uri = String::new();
+
+            let ws_stream = tokio_tungstenite::accept_hdr_async(raw_tcp_stream, |request: &Request, response: Response| -> Result<Response, ErrorResponse> {
+                info!("WS connection request: {:?}", request.uri());
+                uri = request.uri().to_string();
+
+                Ok(response)
+            }).await?;
+
+            if uri == "/discord" {
+                self.discord_connection = Some(ws_stream);
+                info!("Discord connection established");
+            } else {
+                let id = uri.split("/").last().unwrap().parse::<u16>().unwrap();
+                info!("Web connection established: {}", id);
+                self.web_connections.insert(id, ws_stream);
             }
         }
     }
 }
 
-async fn accept_connection(stream: TcpStream) {
-    let addr = stream.peer_addr().expect("connected streams should have a peer address");
-    info!("Peer address: {}", addr);
-    info!("Stream: {:?}", stream.local_addr());
-
-
-    let ws_stream = tokio_tungstenite::accept_async(stream)
-        .await
-        .expect("Error during the websocket handshake occurred");
-
-    info!("New WebSocket connection: {}", addr);
-
-    let (write, read) = ws_stream.split();
-    // We should not forward messages other than text or binary.
-    read.try_filter(|msg| future::ready(msg.is_text() || msg.is_binary()))
-        .forward(write)
-        .await
-        .expect("Failed to forward messages")
-}

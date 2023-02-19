@@ -12,4 +12,45 @@
     const video = document.getElementById('video');
 
     const ws = new WebSocket(`ws://localhost:${window.ws_port}?role=viewer&stream=${window.location.pathname[1]}`);
+
+    const peerConnection = new RTCPeerConnection();
+
+    peerConnection.addEventListener("track", (event) => {
+        video.srcObject = event.streams[0];
+    })
+
+    peerConnection.addEventListener("icecandidate", ({candidate}) => {
+        if (!candidate) {
+            return;
+        }
+
+        ws.send(JSON.stringify({
+            type: "iceCandidate",
+            candidate
+        }));
+    })
+
+    ws.addEventListener("message", async (event) => {
+        switch (event.type){
+            case "offer":
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(event.offer));
+
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+
+                ws.send(JSON.stringify({
+                    type: "answer",
+                    answer: answer
+                }));
+                break;
+            case "answer":
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(event.answer));
+                break;
+            case "iceCandidate":
+                await peerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
+                break;
+            default:
+                console.warn("Unknown message type", event.type);
+        }
+    })
 </script>

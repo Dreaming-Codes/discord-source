@@ -47,10 +47,15 @@ export class Utils {
         });
     }
 
-    /**
-     * Logs a message to the console with the plugin name
-     */
     static log(...msg: any[]) {
-        console.log(`%c[${DiscordSourcePlugin.name}]`, 'color: #bada55', ...msg);
+        console.log(...Utils.logString(...msg));
+    }
+
+    static warn(...msg: any[]) {
+        console.warn(...Utils.logString(...msg));
+    }
+
+    private static logString(...msg: any[]) {
+        return [`%c[${DiscordSourcePlugin.name}]`, 'color: #bada55', ...msg];
     }
 }

@@ -21,6 +21,8 @@ tokio = { version = "1.25.0", features = ["full"] }
 tracing = "0.1.37"
 tracing-subscriber = "0.3.16"
 futures-util = "0.3.26"
+url = "2.3.1"
+http = "0.2.9"
 
 [features]
 # by default Tauri runs in production mode
