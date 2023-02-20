@@ -6,7 +6,7 @@ use tracing::info;
 use crate::DEFAULT_WS_PORT;
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct BdSettings {
+pub struct BdSettings {
     #[serde(rename = "wsPort")]
     ws_port: u16
 }

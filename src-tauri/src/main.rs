@@ -4,8 +4,9 @@ windows_subsystem = "windows"
 )]
 
 use parking_lot::Mutex;
-use tauri::{Manager, State};
+use tauri::{Manager};
 use tracing::{error};
+use crate::bd::BdSettings;
 use crate::web::WebServer;
 use crate::ws::WebSocketServer;
 
@@ -45,22 +46,30 @@ impl Config {
     }
 }
 
+struct State {
+    config: Mutex<Config>,
+    bd_settings: Mutex<Option<BdSettings>>
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    let cfg = Mutex::new(Config::load());
+    let config = Mutex::new(Config::load());
 
     let mut ws_server = WebSocketServer::new();
     let mut web_server = WebServer::new();
 
     tauri::async_runtime::set(tokio::runtime::Handle::current());
     tauri::Builder::default()
-        .manage(cfg)
+        .manage(State {
+            config,
+            bd_settings: Mutex::new(None)
+        })
         .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config])
         .setup(|app| {
-            let cfg: State<'_, Mutex<Config>> = app.state();
-            bind_servers(ws_server, web_server, DEFAULT_WS_PORT, cfg.lock().web_port);
+            let cfg: tauri::State<'_, State> = app.state();
+            bind_servers(ws_server, web_server, DEFAULT_WS_PORT, cfg.config.lock().web_port);
             Ok(())
         })
         .run(tauri::generate_context!())
@@ -68,21 +77,21 @@ async fn main() {
 }
 
 #[tauri::command]
-async fn get_config(state: State<'_, Mutex<Config>>) -> Result<Config,()>{
-    Ok(state.lock().clone())
+async fn get_config(state: tauri::State<'_, State>) -> Result<Config,()>{
+    Ok(state.config.lock().clone())
 }
 
 #[tauri::command]
-async fn set_bd_path(state: State<'_, Mutex<Config>>, path: String) -> Result<(),()>{
-    let mut cfg = state.lock();
+async fn set_bd_path(state: tauri::State<'_, State>, path: String) -> Result<(),()>{
+    let mut cfg = state.config.lock();
     cfg.bd_path = Some(path);
     cfg.save();
     Ok(())
 }
 
 #[tauri::command]
-async fn set_web_port(state: State<'_, Mutex<Config>>, port: u16) -> Result<(),()>{
-    let mut cfg = state.lock();
+async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(),()>{
+    let mut cfg = state.config.lock();
     cfg.web_port = port;
     cfg.save();
     Ok(())
