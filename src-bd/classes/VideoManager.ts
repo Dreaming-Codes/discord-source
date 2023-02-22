@@ -35,7 +35,7 @@ export class VideoManager {
         const video = await Utils.waitForElm(`[data-selenium-video-tile="${event.userId}"] video`) as HTMLVideoElement;
         Utils.log(`Found video element for ${event.streamId} from ${event.userId}!`);
 
-        //Adding userId to video element, so we can find it later when the stream ends
+        //Adding userId to the video element, so we can find it later when the stream ends
         video.dataset.userId = event.userId;
 
         this.videos.set(event.streamId, video);
