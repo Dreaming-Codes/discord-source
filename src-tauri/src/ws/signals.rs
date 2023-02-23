@@ -2,15 +2,15 @@
 #[serde(tag = "type", content = "data")]
 pub enum SignalType {
     #[serde(rename = "add")]
-    Add,
+    Add(AddStreamEvent),
     #[serde(rename = "remove")]
-    Remove,
+    Remove(RemoveStreamEvent),
     #[serde(rename = "ice")]
-    ICE,
+    ICE(ICEEvent),
     #[serde(rename = "answer")]
-    Answer,
+    Answer(AnswerOfferEvent),
     #[serde(rename = "offer")]
-    Offer,
+    Offer(AnswerOfferEvent),
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
