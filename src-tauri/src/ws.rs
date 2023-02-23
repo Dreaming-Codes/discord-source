@@ -1,15 +1,22 @@
 use std::collections::HashMap;
-use futures_util::StreamExt;
+use futures_util::{StreamExt};
 
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
+use tokio_tungstenite::tungstenite::Message;
 use tracing::{info, warn};
 
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
     web_connections: HashMap<String, WebSocketStream<TcpStream>>,
     discord_connection: Option<WebSocketStream<TcpStream>>,
+}
+
+enum Status {
+    Ok,
+    Unhandled(Message),
+    Closed,
 }
 
 impl WebSocketServer {
@@ -48,10 +55,13 @@ impl WebSocketServer {
 
                 loop {
                     let msg = self.discord_connection.as_mut().unwrap().next().await;
-                    if msg.unwrap().unwrap().is_close() {
-                        warn!("Discord connection closed");
-                        self.discord_connection = None;
-                        break;
+                    let status = handle_message(msg.unwrap().unwrap());
+                    match status {
+                        Status::Ok => {}
+                        Status::Unhandled(msg) => {
+                            warn!("Unhandled message from web: {:?}", msg);
+                        }
+                        Status::Closed => {}
                     }
                 }
             } else {
@@ -68,14 +78,17 @@ impl WebSocketServer {
                 }
 
                 info!("Web connection established: {}", id);
-                self.web_connections.insert(id.to_string(), ws_stream);
+                let mut connection = self.web_connections.insert(id.to_string(), ws_stream).unwrap();
 
                 loop {
-                    let msg = self.web_connections.get_mut(id).unwrap().next().await;
-                    if msg.unwrap().unwrap().is_close() {
-                        warn!("Web connection closed: {}", id);
-                        self.web_connections.remove(id);
-                        break;
+                    let msg = connection.next().await;
+                    let status = handle_message(msg.unwrap().unwrap());
+                    match status {
+                        Status::Ok => {}
+                        Status::Unhandled(msg) => {
+                            warn!("Unhandled message from web: {:?}", msg);
+                        }
+                        Status::Closed => {}
                     }
                 }
             }
@@ -83,3 +96,14 @@ impl WebSocketServer {
     }
 }
 
+
+fn handle_message(message: Message) -> Status {
+    if message.is_close() {
+        return Status::Closed;
+    }else if message.is_text() {
+        let text = message.to_text().unwrap();
+        //TODO: Handle messages
+    }
+
+    return Status::Unhandled(message);
+}
