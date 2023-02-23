@@ -5,7 +5,9 @@ use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
+
+use crate::ws::signals::SignalType;
 
 mod signals;
 
@@ -16,7 +18,7 @@ pub struct WebSocketServer {
 }
 
 enum Status {
-    Ok,
+    Ok(SignalType),
     Unhandled(Message),
     Closed,
 }
@@ -59,11 +61,23 @@ impl WebSocketServer {
                     let msg = self.discord_connection.as_mut().unwrap().next().await;
                     let status = handle_message(msg.unwrap().unwrap());
                     match status {
-                        Status::Ok => {}
+                        Status::Ok(event) => {
+                            match event {
+                                SignalType::Add(_) => {}
+                                SignalType::Remove(_) => {}
+                                SignalType::ICE(_) => {}
+                                SignalType::Answer(_) => {}
+                                SignalType::Offer(_) => {}
+                            }
+                        }
                         Status::Unhandled(msg) => {
                             warn!("Unhandled message from web: {:?}", msg);
                         }
-                        Status::Closed => {}
+                        Status::Closed => {
+                            info!("Discord connection closed");
+                            self.discord_connection = None;
+                            break;
+                        }
                     }
                 }
             } else {
@@ -86,11 +100,24 @@ impl WebSocketServer {
                     let msg = connection.next().await;
                     let status = handle_message(msg.unwrap().unwrap());
                     match status {
-                        Status::Ok => {}
+                        Status::Ok(event) => {
+                            match event {
+                                SignalType::ICE(_) => {}
+                                SignalType::Answer(_) => {}
+                                SignalType::Offer(_) => {}
+                                _ => {
+                                    error!("Invalid signal from web: {:?}", event);
+                                }
+                            }
+                        }
                         Status::Unhandled(msg) => {
                             warn!("Unhandled message from web: {:?}", msg);
                         }
-                        Status::Closed => {}
+                        Status::Closed => {
+                            info!("Web connection closed: {}", id);
+                            self.web_connections.remove(id);
+                            break;
+                        }
                     }
                 }
             }
@@ -102,9 +129,10 @@ impl WebSocketServer {
 fn handle_message(message: Message) -> Status {
     if message.is_close() {
         return Status::Closed;
-    } else if message.is_text() {
-        let text = message.to_text().unwrap();
-        //TODO: Handle messages
+    } else if let Ok(text) = message.to_text() {
+        if let Ok(event) = serde_json::from_str::<SignalType>(text) {
+            return Status::Ok(event);
+        }
     }
 
     return Status::Unhandled(message);
