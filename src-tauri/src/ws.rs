@@ -1,10 +1,10 @@
 use std::collections::HashMap;
-use futures_util::{StreamExt};
 
+use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::WebSocketStream;
 use tracing::{info, warn};
 
 pub struct WebSocketServer {
@@ -100,7 +100,7 @@ impl WebSocketServer {
 fn handle_message(message: Message) -> Status {
     if message.is_close() {
         return Status::Closed;
-    }else if message.is_text() {
+    } else if message.is_text() {
         let text = message.to_text().unwrap();
         //TODO: Handle messages
     }

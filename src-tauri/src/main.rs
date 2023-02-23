@@ -4,8 +4,9 @@ windows_subsystem = "windows"
 )]
 
 use parking_lot::Mutex;
-use tauri::{Manager};
-use tracing::{error};
+use tauri::Manager;
+use tracing::error;
+
 use crate::bd::BdSettings;
 use crate::web::WebServer;
 use crate::ws::WebSocketServer;
@@ -21,14 +22,14 @@ const DEFAULT_WEB_PORT: u16 = 4651;
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
 struct Config {
     bd_path: Option<String>,
-    web_port: u16
+    web_port: u16,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             bd_path: None,
-            web_port: DEFAULT_WEB_PORT
+            web_port: DEFAULT_WEB_PORT,
         }
     }
 }
@@ -48,7 +49,7 @@ impl Config {
 
 struct State {
     config: Mutex<Config>,
-    bd_settings: Mutex<Option<BdSettings>>
+    bd_settings: Mutex<Option<BdSettings>>,
 }
 
 #[tokio::main]
@@ -64,7 +65,7 @@ async fn main() {
     tauri::Builder::default()
         .manage(State {
             config,
-            bd_settings: Mutex::new(None)
+            bd_settings: Mutex::new(None),
         })
         .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config])
         .setup(|app| {
@@ -77,12 +78,12 @@ async fn main() {
 }
 
 #[tauri::command]
-async fn get_config(state: tauri::State<'_, State>) -> Result<Config,()>{
+async fn get_config(state: tauri::State<'_, State>) -> Result<Config, ()> {
     Ok(state.config.lock().clone())
 }
 
 #[tauri::command]
-async fn set_bd_path(state: tauri::State<'_, State>, path: String) -> Result<(),()>{
+async fn set_bd_path(state: tauri::State<'_, State>, path: String) -> Result<(), ()> {
     let mut cfg = state.config.lock();
     cfg.bd_path = Some(path);
     cfg.save();
@@ -90,7 +91,7 @@ async fn set_bd_path(state: tauri::State<'_, State>, path: String) -> Result<(),
 }
 
 #[tauri::command]
-async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(),()>{
+async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), ()> {
     let mut cfg = state.config.lock();
     cfg.web_port = port;
     cfg.save();

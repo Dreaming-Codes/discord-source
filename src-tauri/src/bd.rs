@@ -8,7 +8,7 @@ use crate::DEFAULT_WS_PORT;
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct BdSettings {
     #[serde(rename = "wsPort")]
-    ws_port: u16
+    ws_port: u16,
 }
 
 impl BdSettings {
@@ -23,7 +23,7 @@ impl BdSettings {
 
         if let Ok(settings) = settings {
             serde_json::from_str(&settings)
-        }else {
+        } else {
             Ok(Self::new(DEFAULT_WS_PORT))
         }
     }
