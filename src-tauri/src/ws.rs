@@ -94,7 +94,8 @@ impl WebSocketServer {
                 }
 
                 info!("Web connection established: {}", id);
-                let mut connection = self.web_connections.insert(id.to_string(), ws_stream).unwrap();
+                self.web_connections.insert(id.to_string(), ws_stream);
+                let connection = self.web_connections.get_mut(id).unwrap();
 
                 loop {
                     let msg = connection.next().await;
