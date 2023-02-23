@@ -8,6 +8,8 @@ export default class DiscordSourcePlugin {
     private videoManager: VideoManager;
 
     async start() {
+        //TODO: Remove when the plugin is ready and settings are automatically created by the app
+        BdApi.Data.save(DiscordSourcePlugin.name, "wsPort", 8214);
         if (!Settings.getPort()) {
             await Utils.asyncShowConfirmationModal("Discord Source", "Settings not found, please install the plugin from the Discord Source desktop app", {
                 danger: true,
