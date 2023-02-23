@@ -7,6 +7,8 @@ use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 use tracing::{info, warn};
 
+mod signals;
+
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
     web_connections: HashMap<String, WebSocketStream<TcpStream>>,

@@ -24,7 +24,12 @@ export class VideoManager {
             Utils.log(`Video ended for ${event.userId}`);
             this.videos.forEach((video, videoId) => {
                 if (video.dataset.userId === event.userId && !document.body.contains(video)) {
-                    this.ws.sendRemoveVideoStream(videoId);
+                    this.ws.sendEvent({
+                        type: "remove",
+                        data: {
+                            streamId: videoId
+                        }
+                    })
                     this.videos.delete(parseInt(video.dataset.streamId));
                 }
             });
@@ -39,7 +44,13 @@ export class VideoManager {
         video.dataset.userId = event.userId;
 
         this.videos.set(event.streamId, video);
-        this.ws.sendNewVideoStream(event.streamId, event.userId);
+        this.ws.sendEvent({
+            type: "add",
+            data: {
+                streamId: event.streamId,
+                userId: event.userId
+            }
+        })
     }
 
     public async stop() {
@@ -57,7 +68,13 @@ export class VideoManager {
             if (!candidate) {
                 return;
             }
-            this.ws.sendICECandidate(event.streamId, candidate);
+            this.ws.sendEvent({
+                type: "ice",
+                data: {
+                    streamId: event.streamId,
+                    candidate: candidate
+                }
+            })
         })
 
         stream.start();

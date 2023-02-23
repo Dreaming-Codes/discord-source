@@ -2,8 +2,7 @@ import {Utils} from "./Utils";
 import {TypedEventTarget} from "./TypedEventTarget";
 
 export type StartStreamEvent = {
-    readonly type: 'startCaptureStream',
-    readonly streamId: number,
+    readonly type: 'startCaptureStream', readonly streamId: number,
 };
 export type EndStreamEvent = {
     readonly type: 'endCaptureStream'
@@ -12,7 +11,32 @@ export type EndStreamEvent = {
 
 type WSEvent = StartStreamEvent | EndStreamEvent;
 
-export class WS extends TypedEventTarget<WSEvent>{
+interface NewVideoStreamEvent {
+    readonly type: 'add',
+    readonly data: {
+        readonly userId: string,
+        readonly streamId: number,
+    }
+}
+
+interface RemoveVideoStreamEvent {
+    readonly type: 'remove',
+    readonly data: {
+        readonly streamId: number,
+    }
+}
+
+interface ICECandidateEvent {
+    readonly type: 'ice',
+    readonly data: {
+        readonly streamId: number,
+        readonly candidate: RTCIceCandidate,
+    }
+}
+
+type WSMessageEvent = NewVideoStreamEvent | RemoveVideoStreamEvent | ICECandidateEvent;
+
+export class WS extends TypedEventTarget<WSEvent> {
     private ws: WebSocket;
 
     constructor(private port: number) {
@@ -45,55 +69,20 @@ export class WS extends TypedEventTarget<WSEvent>{
         this.ws.close();
     }
 
-    /**
-     * Send a new video stream to the desktop app
-     */
-    public sendNewVideoStream(streamId: number, userId: string) {
-        this.ws.send(JSON.stringify({
-            type: "add",
-            userId,
-            streamId
-        }));
-    }
-
-    /**
-     * Send a remove video stream to the desktop app
-     */
-    public sendRemoveVideoStream(streamId: number) {
-        this.ws.send(JSON.stringify({
-            type: "remove",
-            streamId
-        }));
-    }
-
-    public sendICECandidate(streamId: number, candidate: RTCIceCandidate) {
-        this.ws.send(JSON.stringify({
-            type: "ice",
-            streamId,
-            candidate
-        }));
-    }
-
-    public sendAnswer(streamId: number, answer: RTCSessionDescription) {
-        this.ws.send(JSON.stringify({
-            type: "answer",
-            streamId,
-            answer
-        }));
+    public sendEvent(event: WSMessageEvent) {
+        this.ws.send(JSON.stringify(event));
     }
 
     private eventHandler(event: MessageEvent<any>) {
         switch (event.data.operation) {
             case "startCaptureStream":
                 this.dispatch({
-                    type: "startCaptureStream",
-                    streamId: event.data.streamId
+                    type: "startCaptureStream", streamId: event.data.streamId
                 });
                 break;
             case "endCaptureStream":
                 this.dispatch({
-                    type: "endCaptureStream",
-                    streamId: event.data.streamId
+                    type: "endCaptureStream", streamId: event.data.streamId
                 })
                 break;
             default:

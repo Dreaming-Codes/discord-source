@@ -40,7 +40,9 @@
 
                 ws.send(JSON.stringify({
                     type: "answer",
-                    answer: answer
+                    data: {
+                        sdp: answer
+                    }
                 }));
                 break;
             case "answer":
