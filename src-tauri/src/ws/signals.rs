@@ -13,7 +13,7 @@ pub enum SignalType {
     Offer(AnswerOfferEvent),
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct AddStreamEvent {
     #[serde(rename = "streamId")]
     stream_id: String,
@@ -21,14 +21,14 @@ pub struct AddStreamEvent {
     user_id: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct RemoveStreamEvent {
     #[serde(rename = "streamId")]
     stream_id: String
 }
 
 /// stream_id is optional since it's present only if the event is from discord
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct ICEEvent {
     #[serde(rename = "streamId")]
     stream_id: Option<String>,
@@ -36,7 +36,7 @@ pub struct ICEEvent {
 }
 
 /// stream_id is optional since it's present only if the event is from discord
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct AnswerOfferEvent {
     #[serde(rename = "streamId")]
     stream_id: Option<String>,
