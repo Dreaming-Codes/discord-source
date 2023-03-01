@@ -1,5 +1,6 @@
 import {Utils} from "./Utils";
 import {TypedEventTarget} from "./TypedEventTarget";
+import { SignalType } from "../../src-tauri/bindings/SignalType";
 
 export type StartStreamEvent = {
     readonly type: 'startCaptureStream', readonly streamId: number,
@@ -10,31 +11,6 @@ export type EndStreamEvent = {
 };
 
 type WSEvent = StartStreamEvent | EndStreamEvent;
-
-interface NewVideoStreamEvent {
-    readonly type: 'add',
-    readonly data: {
-        readonly userId: string,
-        readonly streamId: number,
-    }
-}
-
-interface RemoveVideoStreamEvent {
-    readonly type: 'remove',
-    readonly data: {
-        readonly streamId: number,
-    }
-}
-
-interface ICECandidateEvent {
-    readonly type: 'ice',
-    readonly data: {
-        readonly streamId: number,
-        readonly candidate: RTCIceCandidate,
-    }
-}
-
-type WSMessageEvent = NewVideoStreamEvent | RemoveVideoStreamEvent | ICECandidateEvent;
 
 export class WS extends TypedEventTarget<WSEvent> {
     private ws: WebSocket;
@@ -69,7 +45,7 @@ export class WS extends TypedEventTarget<WSEvent> {
         this.ws.close();
     }
 
-    public sendEvent(event: WSMessageEvent) {
+    public sendEvent(event: SignalType) {
         this.ws.send(JSON.stringify(event));
     }
 

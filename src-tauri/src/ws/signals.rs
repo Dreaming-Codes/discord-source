@@ -20,7 +20,7 @@ pub enum SignalType {
 #[ts(export)]
 pub struct AddStreamEvent {
     #[serde(rename = "streamId")]
-    stream_id: String,
+    stream_id: u8,
     #[serde(rename = "userId")]
     user_id: String,
 }
@@ -29,7 +29,7 @@ pub struct AddStreamEvent {
 #[ts(export)]
 pub struct RemoveStreamEvent {
     #[serde(rename = "streamId")]
-    stream_id: String
+    stream_id: u8
 }
 
 /// stream_id is optional since it's present only if the event is from discord
@@ -37,7 +37,7 @@ pub struct RemoveStreamEvent {
 #[ts(export)]
 pub struct ICEEvent {
     #[serde(rename = "streamId")]
-    stream_id: Option<String>,
+    stream_id: Option<u8>,
     candidate: String,
 }
 
@@ -46,6 +46,6 @@ pub struct ICEEvent {
 #[ts(export)]
 pub struct AnswerOfferEvent {
     #[serde(rename = "streamId")]
-    stream_id: Option<String>,
+    stream_id: Option<u8>,
     sdp: String,
 }

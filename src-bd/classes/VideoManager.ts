@@ -72,7 +72,7 @@ export class VideoManager {
                 type: "ice",
                 data: {
                     streamId: event.streamId,
-                    candidate: candidate
+                    candidate: String(candidate)
                 }
             })
         })
