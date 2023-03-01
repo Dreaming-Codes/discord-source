@@ -1,11 +1,12 @@
-use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tracing::info;
 
+const HTML: &str = include_str!("../dist/web/index.html");
+
 pub struct WebServer {
     listener: Option<TcpListener>,
-    html: Option<String>,
+    html: Option<String>
 }
 
 impl WebServer {
@@ -23,13 +24,14 @@ impl WebServer {
         let html_task = tokio::spawn(async move {
             let env_definitions = format!("<script>window.ws_port = {ws_port};</script>\n");
 
-            format!("{}{}", env_definitions, fs::read_to_string("web/index.html").await.unwrap())
+            format!("{}{}", env_definitions, HTML)
         });
 
         let (listener, html) = tokio::join!(listener_task, html_task);
 
-        self.listener = Some(listener?);
         self.html = Some(html.unwrap());
+
+        self.listener = Some(listener?);
         Ok(())
     }
 
@@ -42,16 +44,13 @@ impl WebServer {
     }
 }
 
-async fn handle_connection(mut stream: TcpStream, contents: String) {
+async fn handle_connection(mut stream: TcpStream, content: String) {
     //let buf_reader = BufReader::new(&mut stream);
     //let http_request = buf_reader.lines().next_line().await.unwrap().unwrap();
 
-    let status_line = "HTTP/1.1 200 OK";
+    const STATUS_LINE: &str = "HTTP/1.1 200 OK";
 
-    let length = contents.len();
-
-    let response =
-        format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+    let response = format!("{}\r\nContent-Length: {}\r\n\r\n{}", STATUS_LINE, content.len(), content);
 
     stream.write_all(response.as_bytes()).await.unwrap();
 }

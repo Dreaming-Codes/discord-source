@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm vite",
-    "beforeBuildCommand": "pnpm vite:build",
+    "beforeDevCommand": "pnpm vite build --watch --mode discord & pnpm vite",
+    "beforeBuildCommand": "pnpm vite build --mode discord & pnpm vite:build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false
