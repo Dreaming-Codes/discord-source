@@ -11,7 +11,8 @@
     "tauri:build": "tauri build",
     "bundlebd": "bundlebd",
     "bundlebd:build": "bundlebd",
-    "bundlebd:dev": "bundlebd --dev"
+    "bundlebd:dev": "bundlebd --dev",
+    "postinstall": "cargo test --manifest-path src-tauri/Cargo.toml"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
