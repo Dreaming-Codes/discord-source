@@ -26,6 +26,7 @@ http = "0.2.9"
 directories = { version = "4.0.1" }
 confy = "0.5.1"
 parking_lot = "0.12.1"
+ts-rs = "6.2"
 
 [features]
 # by default Tauri runs in production mode

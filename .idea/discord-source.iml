@@ -8,6 +8,9 @@
       <excludeFolder url="file://$MODULE_DIR$/dist-bd" />
       <excludeFolder url="file://$MODULE_DIR$/.vscode" />
       <excludeFolder url="file://$MODULE_DIR$/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/bindings" />
+      <excludeFolder url="file://$MODULE_DIR$/src-tauri/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
