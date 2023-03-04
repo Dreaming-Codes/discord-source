@@ -1,18 +1,7 @@
-import {Utils} from "./Utils";
-import {TypedEventTarget} from "./TypedEventTarget";
-import { SignalType } from "../../src-tauri/bindings/SignalType";
+import {TypedEventTarget} from "../../shared/TypedEventTarget";
+import { MessageType } from "../../src-tauri/bindings/MessageType";
 
-export type StartStreamEvent = {
-    readonly type: 'startCaptureStream', readonly streamId: number,
-};
-export type EndStreamEvent = {
-    readonly type: 'endCaptureStream'
-    readonly streamId: number,
-};
-
-type WSEvent = StartStreamEvent | EndStreamEvent;
-
-export class WS extends TypedEventTarget<WSEvent> {
+export class WS extends TypedEventTarget<MessageType> {
     private ws: WebSocket;
 
     constructor(private port: number) {
@@ -45,24 +34,11 @@ export class WS extends TypedEventTarget<WSEvent> {
         this.ws.close();
     }
 
-    public sendEvent(event: SignalType) {
+    public sendEvent(event: MessageType) {
         this.ws.send(JSON.stringify(event));
     }
 
-    private eventHandler(event: MessageEvent<any>) {
-        switch (event.data.operation) {
-            case "startCaptureStream":
-                this.dispatch({
-                    type: "startCaptureStream", streamId: event.data.streamId
-                });
-                break;
-            case "endCaptureStream":
-                this.dispatch({
-                    type: "endCaptureStream", streamId: event.data.streamId
-                })
-                break;
-            default:
-                Utils.warn("Unknown operation", event.data.operation);
-        }
+    private eventHandler(event: MessageEvent<MessageType>) {
+        this.dispatch(event.data);
     }
 }

@@ -1,6 +1,7 @@
 import {Utils} from "./Utils";
-import {EndStreamEvent, StartStreamEvent, WS} from "./WS";
+import {WS} from "./WS";
 import {WebRTCStream} from "./WebRTCStream";
+import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
 
 export class VideoManager {
     private videos: Map<number, HTMLVideoElement> = new Map();
@@ -9,8 +10,11 @@ export class VideoManager {
 
     constructor(ws: WS) {
         this.ws = ws;
-        this.ws.addEventListener("startCaptureStream", this.onRequestCaptureVideoStream);
-        this.ws.addEventListener("endCaptureStream", this.onEndCaptureVideoStream);
+        // TODO: Find a way to avoid using ts-ignore in those event listeners
+        // @ts-ignore
+        this.ws.addEventListener("capture", this.onRequestCaptureVideoStream);
+        // @ts-ignore
+        this.ws.addEventListener("endCapture", this.onEndCaptureVideoStream);
     }
 
 
@@ -58,8 +62,8 @@ export class VideoManager {
         this.streams.forEach(stream => stream.close());
     }
 
-    private onRequestCaptureVideoStream(event: Event & StartStreamEvent) {
-        const video = this.videos.get(event.streamId);
+    private onRequestCaptureVideoStream(event: Event & { data: CaptureEvent }) {
+        const video = this.videos.get(event.data.streamId);
         if (!video) return;
 
         const stream = new WebRTCStream(video.captureStream());
@@ -71,7 +75,7 @@ export class VideoManager {
             this.ws.sendEvent({
                 type: "ice",
                 data: {
-                    streamId: event.streamId,
+                    streamId: event.data.streamId,
                     candidate: String(candidate)
                 }
             })
@@ -80,11 +84,11 @@ export class VideoManager {
         stream.start();
     }
 
-    private onEndCaptureVideoStream(event: Event & EndStreamEvent) {
-        const stream = this.streams.get(event.streamId);
+    private onEndCaptureVideoStream(event: Event & { data: CaptureEvent }) {
+        const stream = this.streams.get(event.data.streamId);
         if (!stream) return;
         stream.close();
-        this.streams.delete(event.streamId);
+        this.streams.delete(event.data.streamId);
     }
 
 }

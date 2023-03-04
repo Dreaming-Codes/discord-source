@@ -1,12 +1,18 @@
-const video = document.getElementById('video');
+import {ICEEvent} from "../bindings/ICEEvent";
+import {AnswerOfferEvent} from "../bindings/AnswerOfferEvent";
+
+import {WS} from "./WS";
+
+
+const video = document.getElementById('video') as HTMLVideoElement;
 
 // @ts-ignore
-const ws = new WebSocket(`ws://localhost:${window.ws_port}/${window.location.pathname.substring(1)}`);
+const ws = new WS(`ws://localhost:${window.ws_port}/${window.location.pathname.substring(1)}`);
 
 const peerConnection = new RTCPeerConnection();
 
 peerConnection.addEventListener("track", (event) => {
-    //video.srcObject = event.streams[0];
+    video.srcObject = event.streams[0];
 })
 
 peerConnection.addEventListener("icecandidate", ({candidate}) => {
@@ -14,37 +20,36 @@ peerConnection.addEventListener("icecandidate", ({candidate}) => {
         return;
     }
 
-    ws.send(JSON.stringify({
-        type: "iceCandidate",
-        candidate
-    }));
+    ws.sendEvent({
+        type: "ice",
+        data: {
+            candidate: String(candidate)
+        }
+    });
 })
 
-ws.addEventListener("message", async (event) => {
-    switch (event.type){
-        case "offer":
-            // @ts-ignore
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(event.offer));
+// TODO: Find a way to avoid using ts-ignore in those event listeners
+// @ts-ignore
+ws.addEventListener("ice", (event: Event & { data: ICEEvent }) => {
+    peerConnection.addIceCandidate(new RTCIceCandidate(event.data.candidate as RTCIceCandidateInit));
+});
 
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
+// @ts-ignore
+ws.addEventListener("offer", async (event: Event & { data: AnswerOfferEvent }) => {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(event.data.sdp as unknown as RTCSessionDescriptionInit));
 
-            ws.send(JSON.stringify({
-                type: "answer",
-                data: {
-                    sdp: answer
-                }
-            }));
-            break;
-        case "answer":
-            // @ts-ignore
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(event.answer));
-            break;
-        case "iceCandidate":
-            // @ts-ignore
-            await peerConnection.addIceCandidate(new RTCIceCandidate(event.candidate));
-            break;
-        default:
-            console.warn("Unknown message type", event.type);
-    }
-})
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+
+    ws.sendEvent({
+        type: "answer",
+        data: {
+            sdp: String(answer)
+        }
+    })
+});
+
+// @ts-ignore
+ws.addEventListener("answer", async (event: Event & { data: AnswerOfferEvent }) => {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(event.data.sdp as unknown as RTCSessionDescriptionInit));
+});

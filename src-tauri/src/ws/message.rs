@@ -3,7 +3,7 @@ use ts_rs::TS;
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
 #[ts(export)]
 #[serde(tag = "type", content = "data")]
-pub enum SignalType {
+pub enum MessageType {
     #[serde(rename = "add")]
     Add(AddStreamEvent),
     #[serde(rename = "remove")]
@@ -14,6 +14,10 @@ pub enum SignalType {
     Answer(AnswerOfferEvent),
     #[serde(rename = "offer")]
     Offer(AnswerOfferEvent),
+    #[serde(rename = "capture")]
+    Capture(CaptureEvent),
+    #[serde(rename = "endCapture")]
+    EndCapture(CaptureEvent),
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
@@ -37,6 +41,7 @@ pub struct RemoveStreamEvent {
 #[ts(export)]
 pub struct ICEEvent {
     #[serde(rename = "streamId")]
+    #[ts(optional)]
     stream_id: Option<u8>,
     candidate: String,
 }
@@ -46,6 +51,14 @@ pub struct ICEEvent {
 #[ts(export)]
 pub struct AnswerOfferEvent {
     #[serde(rename = "streamId")]
+    #[ts(optional)]
     stream_id: Option<u8>,
     sdp: String,
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[ts(export)]
+pub struct CaptureEvent {
+    #[serde(rename = "streamId")]
+    stream_id: u8,
 }

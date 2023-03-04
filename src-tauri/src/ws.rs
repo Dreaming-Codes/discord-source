@@ -6,10 +6,9 @@ use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, 
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 use tracing::{error, info, warn};
+use crate::ws::message::MessageType;
 
-use crate::ws::signals::SignalType;
-
-mod signals;
+mod message;
 
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
@@ -18,7 +17,7 @@ pub struct WebSocketServer {
 }
 
 enum Status {
-    Ok(SignalType),
+    Ok(MessageType),
     Unhandled(Message),
     Closed,
 }
@@ -63,11 +62,12 @@ impl WebSocketServer {
                     match status {
                         Status::Ok(event) => {
                             match event {
-                                SignalType::Add(_) => {}
-                                SignalType::Remove(_) => {}
-                                SignalType::ICE(_) => {}
-                                SignalType::Answer(_) => {}
-                                SignalType::Offer(_) => {}
+                                MessageType::Add(_) => {}
+                                MessageType::Remove(_) => {}
+                                MessageType::ICE(_) => {}
+                                MessageType::Answer(_) => {}
+                                MessageType::Offer(_) => {}
+                                _ => {}
                             }
                         }
                         Status::Unhandled(msg) => {
@@ -103,9 +103,9 @@ impl WebSocketServer {
                     match status {
                         Status::Ok(event) => {
                             match event {
-                                SignalType::ICE(_) => {}
-                                SignalType::Answer(_) => {}
-                                SignalType::Offer(_) => {}
+                                MessageType::ICE(_) => {}
+                                MessageType::Answer(_) => {}
+                                MessageType::Offer(_) => {}
                                 _ => {
                                     error!("Invalid signal from web: {:?}", event);
                                 }
@@ -131,7 +131,7 @@ fn handle_message(message: Message) -> Status {
     if message.is_close() {
         return Status::Closed;
     } else if let Ok(text) = message.to_text() {
-        if let Ok(event) = serde_json::from_str::<SignalType>(text) {
+        if let Ok(event) = serde_json::from_str::<MessageType>(text) {
             return Status::Ok(event);
         }
     }
