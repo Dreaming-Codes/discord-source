@@ -34,7 +34,7 @@ export class VideoManager {
                             streamId: videoId
                         }
                     })
-                    this.videos.delete(parseInt(video.dataset.streamId));
+                    this.videos.delete(videoId);
                 }
             });
             return;

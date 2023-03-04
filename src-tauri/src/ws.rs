@@ -62,16 +62,22 @@ impl WebSocketServer {
                     match status {
                         Status::Ok(event) => {
                             match event {
-                                MessageType::Add(_) => {}
-                                MessageType::Remove(_) => {}
+                                MessageType::Add(stream) => {
+                                    info!("Added stream: {:?}", stream);
+                                }
+                                MessageType::Remove(stream) => {
+                                    info!("Removed stream: {:?}", stream);
+                                }
                                 MessageType::ICE(_) => {}
                                 MessageType::Answer(_) => {}
                                 MessageType::Offer(_) => {}
-                                _ => {}
+                                _ => {
+                                    error!("Invalid signal from discord: {:?}", event);
+                                }
                             }
                         }
                         Status::Unhandled(msg) => {
-                            warn!("Unhandled message from web: {:?}", msg);
+                            warn!("Unhandled message from discord: {:?}", msg);
                         }
                         Status::Closed => {
                             info!("Discord connection closed");
