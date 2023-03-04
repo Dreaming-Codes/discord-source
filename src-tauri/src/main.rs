@@ -4,7 +4,7 @@ windows_subsystem = "windows"
 )]
 
 use parking_lot::Mutex;
-use tauri::Manager;
+use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tracing::error;
 
 use crate::bd::BdSettings;
@@ -62,10 +62,33 @@ async fn main() {
     let mut web_server = WebServer::new();
 
     tauri::async_runtime::set(tokio::runtime::Handle::current());
+
+    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+    let show = CustomMenuItem::new("show".to_string(), "Show");
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(show)
+        .add_item(quit);
+
+    #[allow(clippy::single_match)]
     tauri::Builder::default()
         .manage(State {
             config,
             bd_settings: Mutex::new(None),
+        })
+        .system_tray(SystemTray::new().with_menu(tray_menu))
+        .on_system_tray_event(|app, event| match event {
+            SystemTrayEvent::MenuItemClick { id, .. } => {
+                match id.as_str() {
+                    "quit" => app.exit(0),
+                    "show" => app.windows().get("main").unwrap().show().expect("TODO: panic message"),
+                    _ => {}
+                }
+            }
+            SystemTrayEvent::LeftClick { .. } => {
+                println!("Left click");
+                app.windows().get("main").unwrap().show().expect("Failed to show window");
+            }
+            _ => {}
         })
         .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config])
         .setup(|app| {
@@ -73,8 +96,19 @@ async fn main() {
             bind_servers(ws_server, web_server, DEFAULT_WS_PORT, cfg.config.lock().web_port);
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| match event {
+            RunEvent::WindowEvent { event, label, .. } => {
+                if label == "main" {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        _app_handle.windows().get("main").unwrap().hide().expect("Failed to hide window");
+                    }
+                }
+            }
+            _ => {}
+        });
 }
 
 #[tauri::command]

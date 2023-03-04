@@ -18,6 +18,11 @@
         "open": true
       }
     },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    },
     "bundle": {
       "active": true,
       "category": "DeveloperTool",
