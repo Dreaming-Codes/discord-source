@@ -2,6 +2,7 @@ import {Utils} from "./Utils";
 import {WS} from "./WS";
 import {WebRTCStream} from "./WebRTCStream";
 import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
+import {SharedUtils} from "../../shared/SharedUtils";
 
 export class VideoManager {
     private videos: Map<number, HTMLVideoElement> = new Map();
@@ -26,7 +27,10 @@ export class VideoManager {
         //If the streamId is null, it means that the video has ended
         if (!event.streamId) {
             Utils.log(`Video ended for ${event.userId}`);
-            this.videos.forEach((video, videoId) => {
+            //We need to wait a bit, because the video element is removed from the DOM after the event is dispatched
+            await SharedUtils.delay(500);
+
+            for (let [videoId, video] of this.videos.entries()) {
                 if (video.dataset.userId === event.userId && !document.body.contains(video)) {
                     this.ws.sendEvent({
                         type: "remove",
@@ -35,8 +39,9 @@ export class VideoManager {
                         }
                     })
                     this.videos.delete(videoId);
+                    break;
                 }
-            });
+            }
             return;
         }
 
