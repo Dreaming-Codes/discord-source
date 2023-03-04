@@ -80,13 +80,23 @@ async fn main() {
             SystemTrayEvent::MenuItemClick { id, .. } => {
                 match id.as_str() {
                     "quit" => app.exit(0),
-                    "show" => app.windows().get("main").unwrap().show().expect("TODO: panic message"),
+                    "show" => {
+                        app.windows().get("main").unwrap().show().expect("Failed to show window");
+                        app.windows().get("main").unwrap().set_focus().expect("Failed to focus window");
+
+                        let window = app.get_window("main").unwrap();
+
+                        window.show().expect("Failed to show window");
+                        window.set_focus().expect("Failed to focus window");
+                    },
                     _ => {}
                 }
             }
             SystemTrayEvent::LeftClick { .. } => {
-                println!("Left click");
-                app.windows().get("main").unwrap().show().expect("Failed to show window");
+                let window = app.get_window("main").unwrap();
+
+                window.show().expect("Failed to show window");
+                window.set_focus().expect("Failed to focus window");
             }
             _ => {}
         })
