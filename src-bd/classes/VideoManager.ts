@@ -47,11 +47,13 @@ export class VideoManager {
         //Adding userId to the video element, so we can find it later when the stream ends
         video.dataset.userId = event.userId;
 
-        this.videos.set(event.streamId, video);
+        let streamId = parseInt(event.streamId);
+
+        this.videos.set(streamId, video);
         this.ws.sendEvent({
             type: "add",
             data: {
-                streamId: event.streamId,
+                streamId: streamId,
                 userId: event.userId
             }
         })
