@@ -54,6 +54,14 @@ struct State {
 
 #[tokio::main]
 async fn main() {
+    let hwid = hardware_id::get_id().expect("Failed to get hardware id");
+
+    let license = reqwest::get(&format!("https://discord-source-license.dreamingcodes.workers.dev/{}", hwid)).await.expect("Failed to validate hwid");
+
+    if !license.text().await.expect("Failed to get license text").eq("true") {
+        panic!("Invalid license, please contact the developer sending your hardware id: {}", hwid);
+    }
+
     tracing_subscriber::fmt::init();
 
     let config = Mutex::new(Config::load());
