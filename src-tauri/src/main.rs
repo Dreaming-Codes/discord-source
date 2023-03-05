@@ -111,6 +111,7 @@ async fn main() {
         .run(|_app_handle, event| match event {
             RunEvent::WindowEvent { event, label, .. } => {
                 if label == "main" {
+                    //TODO: Add a way to reinitialize the window instead of just hiding it
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                         api.prevent_close();
                         _app_handle.windows().get("main").unwrap().hide().expect("Failed to hide window");
