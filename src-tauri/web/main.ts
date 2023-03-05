@@ -7,7 +7,7 @@ import {WS} from "./WS";
 const video = document.getElementById('video') as HTMLVideoElement;
 
 // @ts-ignore
-const ws = new WS(`ws://localhost:${window.ws_port}/${window.location.pathname.substring(1)}`);
+const ws = new WS(`ws://127.0.0.1:${window.ws_port}/${window.location.pathname.substring(1)}`);
 
 const peerConnection = new RTCPeerConnection();
 
