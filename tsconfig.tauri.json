@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "isolatedModules": false,
     "sourceMap": false
   },
