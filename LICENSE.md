@@ -33,13 +33,17 @@ THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR
 IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT OR THE USE OF THE SOFTWARE, INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION OR ANY OTHER PECUNIARY LOSS, EVEN IF LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. LICENSOR'S TOTAL LIABILITY FOR ANY CLAIMS ARISING OUT OF OR IN CONNECTION WITH THIS AGREEMENT OR THE USE OF THE SOFTWARE SHALL NOT EXCEED THE AMOUNT PAID BY LICENSEE FOR THE SOFTWARE.
 
 # Termination
-This Agreement shall terminate automatically if Licensee breaches any term or condition of this Agreement. Upon termination, Licensee shall immediately cease all use of the Software and destroy all copies of the Software in its possession.
+This Agreement shall terminate automatically if Licensee breaches any term or condition of this Agreement.
+Upon termination,
+Licensee shall immediately cease all uses of the Software and destroy all copies of the Software in its possession.
 
 # Governing Law
 This Agreement shall be governed by and construed in accordance with the laws of the Italy. The parties hereby consent to the exclusive jurisdiction of the courts of the Italy.
 
 # Entire Agreement
-This Agreement constitutes the entire agreement between the parties and supersedes all prior or contemporaneous agreements or understandings, whether oral or written, relating to the subject matter of this Agreement.
+This Agreement constitutes the entire agreement between the parties and supersedes all prior or contemporaneous agreements or understandings,
+whether oral or written,
+relating to the subject of this Agreement.
 
 # Assignment
 Licensee may not assign this Agreement without the prior written consent of Licensor.
