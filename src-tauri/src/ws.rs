@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::sync::Arc;
+use futures_util::lock::Mutex;
 
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
@@ -12,8 +14,8 @@ mod message;
 
 pub struct WebSocketServer {
     listener: Option<TcpListener>,
-    web_connections: HashMap<String, WebSocketStream<TcpStream>>,
-    discord_connection: Option<WebSocketStream<TcpStream>>,
+    web_connections: HashMap<String, Arc<Mutex<WebSocketStream<TcpStream>>>>,
+    discord_connection: Arc<Mutex<Option<WebSocketStream<TcpStream>>>>,
 }
 
 enum Status {
@@ -26,7 +28,7 @@ impl WebSocketServer {
     pub fn new() -> Self {
         Self {
             listener: None,
-            discord_connection: None,
+            discord_connection: Arc::new(Mutex::new(None)),
             web_connections: HashMap::new(),
         }
     }
@@ -53,80 +55,96 @@ impl WebSocketServer {
             }).await?;
 
             if uri == "/discord" {
-                self.discord_connection = Some(ws_stream);
-                info!("Discord connection established");
-
-                loop {
-                    let msg = self.discord_connection.as_mut().unwrap().next().await;
-                    let status = handle_message(msg.unwrap().unwrap());
-                    match status {
-                        Status::Ok(event) => {
-                            match event {
-                                MessageType::Add(stream) => {
-                                    info!("Added stream: {:?}", stream);
-                                }
-                                MessageType::Remove(stream) => {
-                                    info!("Removed stream: {:?}", stream);
-                                }
-                                MessageType::ICE(_) => {}
-                                MessageType::Answer(_) => {}
-                                MessageType::Offer(_) => {}
-                                _ => {
-                                    error!("Invalid signal from discord: {:?}", event);
+                let discord_connection = self.discord_connection.clone();
+                {
+                    let mut discord_connection = discord_connection.lock().await;
+                    if discord_connection.is_some() {
+                        discord_connection.as_mut().unwrap().close(None).await.unwrap();
+                    }
+                    *discord_connection = Some(ws_stream);
+                }
+                tauri::async_runtime::spawn(async move {
+                    loop {
+                        let mut discord_connection = discord_connection.lock().await;
+                        let msg = discord_connection.as_mut().unwrap().next().await;
+                        let status = handle_message(msg.unwrap().unwrap());
+                        match status {
+                            Status::Ok(event) => {
+                                match event {
+                                    MessageType::Add(stream) => {
+                                        info!("Added stream: {:?}", stream);
+                                    }
+                                    MessageType::Remove(stream) => {
+                                        info!("Removed stream: {:?}", stream);
+                                    }
+                                    MessageType::ICE(_) => {}
+                                    MessageType::Answer(_) => {}
+                                    MessageType::Offer(_) => {}
+                                    _ => {
+                                        error!("Invalid signal from discord: {:?}", event);
+                                    }
                                 }
                             }
+                            Status::Unhandled(msg) => {
+                                warn!("Unhandled message from discord: {:?}", msg);
+                            }
+                            Status::Closed => {
+                                info!("Discord connection closed");
+                                discord_connection.take();
+                                break;
+                            }
                         }
-                        Status::Unhandled(msg) => {
-                            warn!("Unhandled message from discord: {:?}", msg);
-                        }
-                        Status::Closed => {
-                            info!("Discord connection closed");
-                            self.discord_connection = None;
-                            break;
-                        }
-                    }
-                }
+                    };
+                });
             } else {
-                let id = uri.split("/").last().unwrap();
-                if id.len() < 1 {
-                    warn!("Invalid web connection request: {}", uri);
-                    ws_stream.close(None).await?;
+                let id = uri.split('/').last().unwrap_or_default();
+                if id.is_empty() {
+                    warn!("Invalid web connection request: {:?}", uri);
+                    let _ = ws_stream.close(None).await;
                     continue;
                 }
                 if self.web_connections.contains_key(id) {
                     warn!("Web connection already exists: {}", id);
-                    ws_stream.close(None).await?;
+                    let _ = ws_stream.close(None).await;
                     continue;
                 }
 
                 info!("Web connection established: {}", id);
-                self.web_connections.insert(id.to_string(), ws_stream);
+                self.web_connections.insert(id.to_string(), Arc::new(Mutex::new(ws_stream)));
                 let connection = self.web_connections.get_mut(id).unwrap();
-
-                loop {
-                    let msg = connection.next().await;
-                    let status = handle_message(msg.unwrap().unwrap());
-                    match status {
-                        Status::Ok(event) => {
-                            match event {
-                                MessageType::ICE(_) => {}
-                                MessageType::Answer(_) => {}
-                                MessageType::Offer(_) => {}
-                                _ => {
-                                    error!("Invalid signal from web: {:?}", event);
+                let connection = connection.clone();
+                tauri::async_runtime::spawn({
+                    let id = id.to_string();
+                    async move {
+                        loop {
+                            let mut connection = connection.lock().await;
+                            let msg = connection.next().await;
+                            let status = handle_message(msg.unwrap().unwrap_or_else(|e| {
+                                error!("Error reading message: {}", e);
+                                Message::Close(None)
+                            }));
+                            match status {
+                                Status::Ok(event) => {
+                                    match event {
+                                        MessageType::ICE(_) => {}
+                                        MessageType::Answer(_) => {}
+                                        MessageType::Offer(_) => {}
+                                        _ => {
+                                            error!("Invalid signal from web: {:?}", event);
+                                        }
+                                    }
+                                }
+                                Status::Unhandled(msg) => {
+                                    warn!("Unhandled message from web: {:?}", msg);
+                                }
+                                Status::Closed => {
+                                    info!("Web connection closed: {}", id);
+                                    break;
                                 }
                             }
                         }
-                        Status::Unhandled(msg) => {
-                            warn!("Unhandled message from web: {:?}", msg);
-                        }
-                        Status::Closed => {
-                            info!("Web connection closed: {}", id);
-                            self.web_connections.remove(id);
-                            break;
-                        }
                     }
-                }
+                });
             }
         }
     }
