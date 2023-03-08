@@ -36,7 +36,7 @@ Licensee shall immediately cease all uses of the Software and destroy all copies
 
 # Governing Law
 This Agreement shall be governed by and construed in accordance with the laws of Italy.
-The parties hereby consent to the exclusive jurisdiction of the courts of the Italy.
+The parties hereby consent to the exclusive jurisdiction of the courts of Italy.
 
 # Entire Agreement
 This Agreement constitutes the entire agreement between the parties and supersedes all prior or contemporaneous agreements or understandings,
