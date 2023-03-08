@@ -54,13 +54,19 @@ struct State {
 
 #[tokio::main]
 async fn main() {
-    let hwid = hardware_id::get_id().expect("Failed to get hardware id");
-
-    let license = reqwest::get(&format!("https://discord-source-license.dreamingcodes.workers.dev/{}", hwid)).await.expect("Failed to validate hwid");
-
-    if !license.text().await.expect("Failed to get license text").eq("true") {
-        panic!("Invalid license, please contact the developer sending your hardware id: {}", hwid);
-    }
+    // IMPORTANT:
+    // Before using the Software,
+    // please ensure
+    // that you have read and understood the terms and conditions of the License Agreement
+    // provided in the LICENSE.md file.
+    // In particular,
+    // note that the license key check with my servers must be left in place
+    // and functioning properly for any distribution of the Software.
+    // Therefore,
+    // it is essential that you call the function check_license()
+    // before proceeding to use the Software.
+    // Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
+    check_license().await;
 
     tracing_subscriber::fmt::init();
 
@@ -164,4 +170,25 @@ fn bind_servers<R: tauri::Runtime>(mut ws_server: WebSocketServer<R>, mut web_se
         web_server.bind(web_port, ws_port).await.expect("Failed to bind Web server");
         web_server.run().await;
     });
+}
+
+// IMPORTANT:
+// Before using the Software,
+// please ensure
+// that you have read and understood the terms and conditions of the License Agreement provided above.
+// In particular,
+// note that the license key check with my servers must be left in place
+// and functioning properly for any distribution of the Software.
+// Therefore,
+// it is essential that you call the function check_license()
+// before proceeding to use the Software.
+// Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
+async fn check_license() {
+    let hwid = hardware_id::get_id().expect("Failed to get hardware id");
+
+    let license = reqwest::get(&format!("https://discord-source-license.dreamingcodes.workers.dev/{}", hwid)).await.expect("Failed to validate hwid");
+
+    if !license.text().await.expect("Failed to get license text").eq("true") {
+        panic!("Invalid license, please contact the developer sending your hardware id: {}", hwid);
+    }
 }
