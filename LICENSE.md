@@ -23,9 +23,6 @@ Licensor retains all proprietary rights in and to the Software, including all co
 # Confidentiality
 Licensee acknowledges that the Software contains proprietary and confidential information of Licensor. Licensee agrees to hold the Software in confidence and not to disclose or use the Software except as expressly permitted by this Agreement.
 
-# Warranty
-Licensor warrants that the Software will perform substantially in accordance with the specifications set forth in the documentation accompanying the Software.
-
 # Disclaimer of Warranty
 THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. LICENSOR DOES NOT WARRANT THAT THE SOFTWARE WILL MEET LICENSEE'S REQUIREMENTS OR THAT THE OPERATION OF THE SOFTWARE WILL BE UNINTERRUPTED OR ERROR-FREE.
 
@@ -38,7 +35,8 @@ Upon termination,
 Licensee shall immediately cease all uses of the Software and destroy all copies of the Software in its possession.
 
 # Governing Law
-This Agreement shall be governed by and construed in accordance with the laws of the Italy. The parties hereby consent to the exclusive jurisdiction of the courts of the Italy.
+This Agreement shall be governed by and construed in accordance with the laws of Italy.
+The parties hereby consent to the exclusive jurisdiction of the courts of the Italy.
 
 # Entire Agreement
 This Agreement constitutes the entire agreement between the parties and supersedes all prior or contemporaneous agreements or understandings,
