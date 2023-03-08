@@ -1,21 +1,23 @@
 use std::collections::HashMap;
 use std::sync::Arc;
-use futures_util::lock::Mutex;
 
+use futures_util::lock::Mutex;
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
 use tracing::{error, info, warn};
+
 use crate::ws::message::MessageType;
 
 mod message;
 
-pub struct WebSocketServer {
+pub struct WebSocketServer<R: tauri::Runtime> {
     listener: Option<TcpListener>,
     web_connections: HashMap<String, Arc<Mutex<WebSocketStream<TcpStream>>>>,
     discord_connection: Arc<Mutex<Option<WebSocketStream<TcpStream>>>>,
+    window: Option<tauri::Window<R>>,
 }
 
 enum Status {
@@ -24,12 +26,13 @@ enum Status {
     Closed,
 }
 
-impl WebSocketServer {
+impl<R: tauri::Runtime> WebSocketServer<R> {
     pub fn new() -> Self {
         Self {
             listener: None,
             discord_connection: Arc::new(Mutex::new(None)),
             web_connections: HashMap::new(),
+            window: None,
         }
     }
 
@@ -39,6 +42,10 @@ impl WebSocketServer {
 
         self.listener = Some(listener);
         Ok(())
+    }
+
+    pub fn set_window(&mut self, window: tauri::Window<R>) {
+        self.window = Some(window);
     }
 
     pub async fn accept_connections(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -63,6 +70,7 @@ impl WebSocketServer {
                     }
                     *discord_connection = Some(ws_stream);
                 }
+                let window = self.window.clone().unwrap();
                 tauri::async_runtime::spawn(async move {
                     loop {
                         let mut discord_connection = discord_connection.lock().await;
@@ -73,9 +81,11 @@ impl WebSocketServer {
                                 match event {
                                     MessageType::Add(stream) => {
                                         info!("Added stream: {:?}", stream);
+                                        window.emit("stream-added", ()).unwrap();
                                     }
                                     MessageType::Remove(stream) => {
                                         info!("Removed stream: {:?}", stream);
+                                        window.emit("stream-removed", ()).unwrap();
                                     }
                                     MessageType::ICE(_) => {}
                                     MessageType::Answer(_) => {}

@@ -96,7 +96,7 @@ async fn main() {
 
                         window.show().expect("Failed to show window");
                         window.set_focus().expect("Failed to focus window");
-                    },
+                    }
                     _ => {}
                 }
             }
@@ -111,6 +111,9 @@ async fn main() {
         .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config])
         .setup(|app| {
             let cfg: tauri::State<'_, State> = app.state();
+
+            ws_server.set_window(app.get_window("main").unwrap());
+
             bind_servers(ws_server, web_server, DEFAULT_WS_PORT, cfg.config.lock().web_port);
             Ok(())
         })
@@ -152,7 +155,7 @@ async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), (
 }
 
 //TODO: Handle errors sensing the error to the UI and asking the user to change the port
-fn bind_servers(mut ws_server: WebSocketServer, mut web_server: WebServer, ws_port: u16, web_port: u16) {
+fn bind_servers<R: tauri::Runtime>(mut ws_server: WebSocketServer<R>, mut web_server: WebServer, ws_port: u16, web_port: u16) {
     tauri::async_runtime::spawn(async move {
         ws_server.bind(ws_port.clone()).await.expect("Failed to bind WS server");
         ws_server.accept_connections().await.expect("Failed to accept WS connections");
