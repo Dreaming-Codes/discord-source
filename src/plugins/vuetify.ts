@@ -11,6 +11,9 @@ import 'vuetify/styles'
 // Composables
 import {createVuetify} from 'vuetify';
 import {useColorMode} from "@vueuse/core";
+import 'material-design-icons-iconfont/dist/material-design-icons.css';
+import { md } from 'vuetify/iconsets/md';
+import { aliases, mdi} from "vuetify/iconsets/mdi";
 
 const mode = useColorMode()
 
@@ -19,4 +22,12 @@ export default createVuetify({
     theme: {
         defaultTheme: mode.value
     },
+    icons: {
+        defaultSet: 'mdi',
+        aliases,
+        sets: {
+            md,
+            mdi
+        },
+    }
 })

@@ -11,6 +11,7 @@ specifiers:
   bundlebd: github:Neodymium7/BundleBD
   deepmerge: ^4.3.0
   esbuild: ^0.17.10
+  material-design-icons-iconfont: ^6.7.0
   roboto-fontface: ^0.10.0
   rollup: ^3.17.3
   sass: ^1.58.3
@@ -42,6 +43,7 @@ devDependencies:
   bundlebd: github.com/Neodymium7/BundleBD/2f0aa9cd81339b261872f5e1cada92a98e5f0cdf_esbuild@0.17.10
   deepmerge: 4.3.0
   esbuild: 0.17.10
+  material-design-icons-iconfont: 6.7.0
   rollup: 3.17.3
   sass: 1.58.3
   typescript: 4.9.5
@@ -3131,6 +3133,10 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       semver: 6.3.0
+
+  /material-design-icons-iconfont/6.7.0:
+    resolution: {integrity: sha512-lSj71DgVv20kO0kGbs42icDzbRot61gEDBLQACzkUuznRQBUYmbxzEkGU6dNBb5fRWHMaScYlAXX96HQ4/cJWA==}
+    dev: true
 
   /mdn-data/2.0.14:
     resolution: {integrity: sha512-dn6wd0uw5GsdswPFfsgMp5NSB0/aDe6fK94YJV/AJDYXL6HVLWBsxeq7js7Ad+mU2K9LAlwpk6kN2D5mwCPVow==}
