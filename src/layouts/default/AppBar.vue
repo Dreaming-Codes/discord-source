@@ -10,14 +10,16 @@ function toggleMode() {
 
 
 <template>
-  <v-app-bar flat>
-    <v-app-bar-title>
-      <v-icon icon="mdi-circle-slice-4" />
-      Base Preset
-    </v-app-bar-title>
+  <v-navigation-drawer expand-on-hover rail>
+    <v-list density="compact" nav>
+      <v-list-item to="/home" prepend-icon="md:home" title="Home"></v-list-item>
+      <v-list-item to="/settings" prepend-icon="md:settings" title="Settings"></v-list-item>
+    </v-list>
 
     <template v-slot:append>
-      <v-btn @click="toggleMode" :icon="mode === 'light' ? 'md:light_mode' : 'md:dark_mode'"></v-btn>
+      <v-list density="compact" nav>
+        <v-list-item :prepend-icon="mode === 'light' ? 'md:light_mode' : 'md:dark_mode'" :title="`${mode.charAt(0).toUpperCase() + mode.substr(1)} theme`" @click="toggleMode"></v-list-item>
+      </v-list>
     </template>
-  </v-app-bar>
+  </v-navigation-drawer>
 </template>

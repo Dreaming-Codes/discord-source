@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Default from "../layouts/default/Default.vue";
 import Home from "../views/Home.vue";
+import Settings from "../views/Settings.vue";
 
 const routes = [
     {
@@ -9,10 +10,19 @@ const routes = [
         component: Default,
         children: [
             {
-                path: '',
+                path: 'home',
                 name: 'Home',
                 component: Home,
             },
+            {
+                path: 'settings',
+                name: 'Settings',
+                component: Settings,
+            },
+            {
+                path: '',
+                redirect: { path: 'home' },
+            }
         ],
     },
 ]
