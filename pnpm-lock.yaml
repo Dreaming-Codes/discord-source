@@ -7,6 +7,7 @@ specifiers:
   '@types/node': ^18.14.2
   '@types/webfontloader': ^1.6.35
   '@vitejs/plugin-vue': ^4.0.0
+  '@vueuse/core': ^9.13.0
   bundlebd: github:Neodymium7/BundleBD
   deepmerge: ^4.3.0
   esbuild: ^0.17.10
@@ -37,7 +38,8 @@ devDependencies:
   '@types/node': 18.14.2
   '@types/webfontloader': 1.6.35
   '@vitejs/plugin-vue': 4.0.0_vite@4.1.4+vue@3.2.47
-  bundlebd: github.com/Neodymium7/BundleBD/235cdf5aa8bd880f809c9056e2ab1e47527c8c92_esbuild@0.17.10
+  '@vueuse/core': 9.13.0_vue@3.2.47
+  bundlebd: github.com/Neodymium7/BundleBD/2f0aa9cd81339b261872f5e1cada92a98e5f0cdf_esbuild@0.17.10
   deepmerge: 4.3.0
   esbuild: 0.17.10
   rollup: 3.17.3
@@ -2164,6 +2166,10 @@ packages:
     resolution: {integrity: sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==}
     dev: true
 
+  /@types/web-bluetooth/0.0.16:
+    resolution: {integrity: sha512-oh8q2Zc32S6gd/j50GowEjKLoOVOwHP/bWVjKJInBwQqdOYMdPrf1oVlelTlyfFK3CKxL1uahMDAr+vy8T7yMQ==}
+    dev: true
+
   /@types/webfontloader/1.6.35:
     resolution: {integrity: sha512-IJlrsiDWq6KghQ7tPlL5tcwSUyOxLDceT+AFUY7Ylj0Fcv3/h3QkANqQxZ0B5mEpEKxhTw76vDmvrruSMV9n9Q==}
     dev: true
@@ -2305,6 +2311,31 @@ packages:
       upath: 2.0.1
       vue: 3.2.47
       vuetify: 3.1.7_zhdigtlnoj4qfl4bi7c6fb2bly
+
+  /@vueuse/core/9.13.0_vue@3.2.47:
+    resolution: {integrity: sha512-pujnclbeHWxxPRqXWmdkKV5OX4Wk4YeK7wusHqRwU0Q7EFusHoqNA/aPhB6KCh9hEqJkLAJo7bb0Lh9b+OIVzw==}
+    dependencies:
+      '@types/web-bluetooth': 0.0.16
+      '@vueuse/metadata': 9.13.0
+      '@vueuse/shared': 9.13.0_vue@3.2.47
+      vue-demi: 0.13.11_vue@3.2.47
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: true
+
+  /@vueuse/metadata/9.13.0:
+    resolution: {integrity: sha512-gdU7TKNAUVlXXLbaF+ZCfte8BjRJQWPCa2J55+7/h+yDtzw3vOoGQDRXzI6pyKyo6bXFT5/QoPE4hAknExjRLQ==}
+    dev: true
+
+  /@vueuse/shared/9.13.0_vue@3.2.47:
+    resolution: {integrity: sha512-UrnhU+Cnufu4S6JLCPZnkWh0WwZGUp72ktOF2DFptMlOs3TOdVv8xJN53zhHGARmVOsz5KqOls09+J1NR6sBKw==}
+    dependencies:
+      vue-demi: 0.13.11_vue@3.2.47
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - vue
+    dev: true
 
   /ansi-styles/3.2.1:
     resolution: {integrity: sha512-VT0ZI6kZRdTh8YyJw3SMbYm/u+NqfsAxEpWO0Pf9sq8/e94WxxOpPKx9FR1FlyCtOVDNOQ+8ntlqFxiRc+r5qA==}
@@ -4029,6 +4060,21 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
 
+  /vue-demi/0.13.11_vue@3.2.47:
+    resolution: {integrity: sha512-IR8HoEEGM65YY3ZJYAjMlKygDQn25D5ajNFNoKh9RSDMQtlzCxtfQjdQgv9jjK+m3377SsJXY8ysq8kLCZL25A==}
+    engines: {node: '>=12'}
+    hasBin: true
+    requiresBuild: true
+    peerDependencies:
+      '@vue/composition-api': ^1.0.0-rc.1
+      vue: ^3.0.0-0 || ^2.6.0
+    peerDependenciesMeta:
+      '@vue/composition-api':
+        optional: true
+    dependencies:
+      vue: 3.2.47
+    dev: true
+
   /vue-router/4.1.6_vue@3.2.47:
     resolution: {integrity: sha512-DYWYwsG6xNPmLq/FmZn8Ip+qrhFEzA14EI12MsMgVxvHFDYvlr4NXpVF5hrRH1wVcDP8fGi5F4rxuJSl8/r+EQ==}
     peerDependencies:
@@ -4101,11 +4147,11 @@ packages:
     engines: {node: '>= 6'}
     dev: true
 
-  github.com/Neodymium7/BundleBD/235cdf5aa8bd880f809c9056e2ab1e47527c8c92_esbuild@0.17.10:
-    resolution: {tarball: https://codeload.github.com/Neodymium7/BundleBD/tar.gz/235cdf5aa8bd880f809c9056e2ab1e47527c8c92}
-    id: github.com/Neodymium7/BundleBD/235cdf5aa8bd880f809c9056e2ab1e47527c8c92
+  github.com/Neodymium7/BundleBD/2f0aa9cd81339b261872f5e1cada92a98e5f0cdf_esbuild@0.17.10:
+    resolution: {tarball: https://codeload.github.com/Neodymium7/BundleBD/tar.gz/2f0aa9cd81339b261872f5e1cada92a98e5f0cdf}
+    id: github.com/Neodymium7/BundleBD/2f0aa9cd81339b261872f5e1cada92a98e5f0cdf
     name: bundlebd
-    version: 3.2.1
+    version: 3.3.0
     hasBin: true
     dependencies:
       '@rollup/plugin-alias': 4.0.3_rollup@2.79.1
@@ -4114,7 +4160,7 @@ packages:
       '@rollup/plugin-node-resolve': 14.1.0_rollup@2.79.1
       '@rollup/plugin-replace': 4.0.0_rollup@2.79.1
       '@svgr/rollup': 6.5.1
-      '@types/bdapi': github.com/zerthox/betterdiscord-types/fcf9d720bc2309660d7b8bffd8f7aa7a8dfe1fd9
+      '@types/bdapi': github.com/zerthox/betterdiscord-types/eebbf6517af6cf9cafd0a21f1cd64e5371669490
       less: 4.1.3
       rollup: 2.79.1
       rollup-plugin-esbuild: 4.10.3_fayznknsuyb3ktunwe2fqi4fpm
@@ -4126,10 +4172,10 @@ packages:
       - supports-color
     dev: true
 
-  github.com/zerthox/betterdiscord-types/fcf9d720bc2309660d7b8bffd8f7aa7a8dfe1fd9:
-    resolution: {tarball: https://codeload.github.com/zerthox/betterdiscord-types/tar.gz/fcf9d720bc2309660d7b8bffd8f7aa7a8dfe1fd9}
+  github.com/zerthox/betterdiscord-types/eebbf6517af6cf9cafd0a21f1cd64e5371669490:
+    resolution: {tarball: https://codeload.github.com/zerthox/betterdiscord-types/tar.gz/eebbf6517af6cf9cafd0a21f1cd64e5371669490}
     name: betterdiscord-types
-    version: 1.8.8
+    version: 1.8.9
     dependencies:
       '@types/classnames': 2.3.1
       '@types/lodash': 4.14.191
