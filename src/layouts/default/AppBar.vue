@@ -10,7 +10,7 @@ function toggleMode() {
 
 
 <template>
-  <v-navigation-drawer expand-on-hover rail>
+  <v-navigation-drawer permanent expand-on-hover rail>
     <v-list density="compact" nav>
       <v-list-item to="/home" prepend-icon="md:home" title="Home"></v-list-item>
       <v-list-item to="/settings" prepend-icon="md:settings" title="Settings"></v-list-item>
