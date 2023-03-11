@@ -34,8 +34,11 @@ jobs:
           node-version: 'current'
           cache: 'pnpm'
 
-      - name: Install app dependencies and build web
-        run: pnpm install
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          run_install: true
 
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
