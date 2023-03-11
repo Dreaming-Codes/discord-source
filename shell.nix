@@ -25,6 +25,8 @@ let
     appimagekit
     cargo
     rustc
+    nodejs
+    nodePackages.pnpm
   ];
 in
 pkgs.mkShell {

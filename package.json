@@ -12,7 +12,8 @@
     "bundlebd": "bundlebd",
     "bundlebd:build": "bundlebd",
     "bundlebd:dev": "bundlebd --dev",
-    "postinstall": "cargo test --manifest-path src-tauri/Cargo.toml"
+    "postinstall": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "nv": "node --version"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
