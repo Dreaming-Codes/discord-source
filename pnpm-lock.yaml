@@ -12,9 +12,11 @@ specifiers:
   deepmerge: ^4.3.0
   esbuild: ^0.17.10
   material-design-icons-iconfont: ^6.7.0
+  mkdirp: ^2.1.5
   roboto-fontface: ^0.10.0
   rollup: ^3.17.3
   sass: ^1.58.3
+  touch: ^3.1.0
   typescript: ^4.9.5
   vite: ^4.1.4
   vite-plugin-singlefile: ^0.13.3
@@ -44,8 +46,10 @@ devDependencies:
   deepmerge: 4.3.0
   esbuild: 0.17.10
   material-design-icons-iconfont: 6.7.0
+  mkdirp: 2.1.5
   rollup: 3.17.3
   sass: 1.58.3
+  touch: 3.1.0
   typescript: 4.9.5
   vite: 4.1.4_wlyq37gek244gc22rfb2kn6efu
   vite-plugin-singlefile: 0.13.3_rollup@3.17.3+vite@4.1.4
@@ -2339,6 +2343,10 @@ packages:
       - vue
     dev: true
 
+  /abbrev/1.1.1:
+    resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
+    dev: true
+
   /ansi-styles/3.2.1:
     resolution: {integrity: sha512-VT0ZI6kZRdTh8YyJw3SMbYm/u+NqfsAxEpWO0Pf9sq8/e94WxxOpPKx9FR1FlyCtOVDNOQ+8ntlqFxiRc+r5qA==}
     engines: {node: '>=4'}
@@ -3188,6 +3196,12 @@ packages:
       brace-expansion: 2.0.1
     dev: true
 
+  /mkdirp/2.1.5:
+    resolution: {integrity: sha512-jbjfql+shJtAPrFoKxHOXip4xS+kul9W3OzfzzrqueWK2QMGon2bFH2opl6W9EagBThjEz+iysyi/swOoVfB/w==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dev: true
+
   /ms/2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
 
@@ -3221,6 +3235,13 @@ packages:
 
   /node-releases/2.0.10:
     resolution: {integrity: sha512-5GFldHPXVG/YZmFzJvKK2zDSzPKhEp0+ZR5SVaoSag9fsL5YgHbUHDfnG5494ISANDcK4KwPXAx2xqVEydmd7w==}
+    dev: true
+
+  /nopt/1.0.10:
+    resolution: {integrity: sha512-NWmpvLSqUrgrAC9HCuxEvb+PSloHpqVu+FqcO4eeF2h5qYRhA7ev6KvelyQAKtegUbC6RypJnlEOhd8vloNKYg==}
+    hasBin: true
+    dependencies:
+      abbrev: 1.1.1
     dev: true
 
   /normalize-path/3.0.0:
@@ -3946,6 +3967,13 @@ packages:
     engines: {node: '>=8.0'}
     dependencies:
       is-number: 7.0.0
+
+  /touch/3.1.0:
+    resolution: {integrity: sha512-WBx8Uy5TLtOSRtIq+M03/sKDrXCLHxwDcquSP2c43Le03/9serjQBIztjRz6FkJez9D/hleyAXTBGLwwZUw9lA==}
+    hasBin: true
+    dependencies:
+      nopt: 1.0.10
+    dev: true
 
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}

@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "mkdir -p ./src-tauri/dist/web/ && touch ./src-tauri/dist/web/index.html && cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --watch --mode discord & pnpm vite",
-    "beforeBuildCommand": "mkdir -p ./src-tauri/dist/web/ && touch ./src-tauri/dist/web/index.html && cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --mode discord & pnpm vite:build",
+    "beforeDevCommand": "cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --watch --mode discord & pnpm vite",
+    "beforeBuildCommand": "cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --mode discord & pnpm vite:build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false
