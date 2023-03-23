@@ -80,12 +80,11 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                             Status::Ok(event) => {
                                 match event {
                                     MessageType::Add(stream) => {
-                                        info!("Added stream: {:?}", stream);
-                                        window.emit("stream-added", ()).unwrap();
+                                        window.emit("stream-added", stream.stream_id).unwrap();
                                     }
                                     MessageType::Remove(stream) => {
                                         info!("Removed stream: {:?}", stream);
-                                        window.emit("stream-removed", ()).unwrap();
+                                        window.emit("stream-removed", stream.stream_id).unwrap();
                                     }
                                     MessageType::ICE(_) => {}
                                     MessageType::Answer(_) => {}
@@ -123,6 +122,8 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 self.web_connections.insert(id.to_string(), Arc::new(Mutex::new(ws_stream)));
                 let connection = self.web_connections.get_mut(id).unwrap();
                 let connection = connection.clone();
+                let window = self.window.clone().unwrap();
+                window.emit("web-added", id).unwrap();
                 tauri::async_runtime::spawn({
                     let id = id.to_string();
                     async move {
@@ -149,6 +150,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                 }
                                 Status::Closed => {
                                     info!("Web connection closed: {}", id);
+                                    window.emit("web-removed", id).unwrap();
                                     break;
                                 }
                             }

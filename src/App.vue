@@ -16,13 +16,5 @@ watch(mode, (value) => {
   theme.global.name.value = value;
 })
 
-appWindow.listen("stream-added", ()=>{
-  console.log("stream added")
-})
-
-appWindow.listen("stream-removed", ()=>{
-  console.log("stream removed")
-})
-
 invoke("get_config").then(console.log)
 </script>
