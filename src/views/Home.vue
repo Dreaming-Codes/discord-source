@@ -102,6 +102,14 @@ function startDrawing(e: DragEvent) {
   function stopDrawing() {
     if (!hoveredElement) {
       connections.pop();
+    }else{
+      //Find existing connection
+      const existingConnection = connections.filter((connection) => connection.target.element === hoveredElement?.element && connection.source.element === currentLine.source.element);
+      //Remove current and existing connection if they exist
+      if(existingConnection.length > 1){
+        connections.splice(connections.indexOf(currentLine), 1);
+        connections.splice(connections.indexOf(existingConnection[0]), 1);
+      }
     }
     window.removeEventListener("mousemove", updateLine);
     window.removeEventListener("mouseup", stopDrawing);
