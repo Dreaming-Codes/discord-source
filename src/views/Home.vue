@@ -141,7 +141,7 @@ invoke('get_bd_path').then((res) => {
         </div>
       </v-col>
     </v-row>
-    <svg id="svg" class="position-absolute fill-height w-100">
+    <svg id="lineDrawer" class="position-absolute fill-height w-100">
       <line v-for="line in connections" :x1="line.source.connectionPoint.x" :y1="line.source.connectionPoint.y"
             :x2="line.target.connectionPoint.x" :y2="line.target.connectionPoint.y"
             stroke-width="1" stroke="white"/>
@@ -150,8 +150,9 @@ invoke('get_bd_path').then((res) => {
 </template>
 
 <style scoped lang="scss">
-#svg {
+#lineDrawer {
   pointer-events: none;
   left: 0;
+  top: 0;
 }
 </style>
