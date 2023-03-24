@@ -7,7 +7,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Download all build artifacts
-        uses: actions/download-artifact@v2.1.1
+        uses: actions/download-artifact@v3
+        
+      - name: Display structure of downloaded files
+        run: ls -R
 
       - name: Unzip all artifacts
         uses: montudor/action-zip@v1
