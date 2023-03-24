@@ -4,6 +4,7 @@ on:
     inputs:
       tag:
         type: string
+        required: true
 
 jobs:
   release:
@@ -25,3 +26,4 @@ jobs:
         with:
           artifacts: "unzipped_artifacts/**/*"
           draft: true
+          tag: ${{ github.event.inputs.tag }}
