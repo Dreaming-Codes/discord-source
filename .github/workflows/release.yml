@@ -5,6 +5,8 @@ on:
       tag:
         type: string
         required: true
+permissions:
+  contents: write
 
 jobs:
   release:
