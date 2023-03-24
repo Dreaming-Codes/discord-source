@@ -26,7 +26,7 @@ jobs:
       - name: Create draft release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "unzipped_artifacts/**/*"
+          artifacts: "downloaded_artifacts/**/*"
           draft: true
           tag: ${{ github.event.inputs.tag }}
           commit: ${{ github.event.workflow_run.head_sha }}
