@@ -7,16 +7,21 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Download all build artifacts
-        uses: actions/download-artifact@v3
-        
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: build.yml
+          workflow_conclusion: success
+          commit: ${{ github.event.workflow_run.head_sha }}
+          path: downloaded_artifacts
+
       - name: Display structure of downloaded files
         run: ls -R
 
       - name: Unzip all artifacts
         uses: montudor/action-zip@v1
         with:
-          args: unzip *.zip -d unzipped_artifacts
-          
+          args: unzip downloaded_artifacts/*.zip -d unzipped_artifacts
+
       - name: Create draft release
         uses: ncipollo/release-action@v1
         with:
