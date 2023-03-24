@@ -27,3 +27,7 @@ jobs:
           artifacts: "unzipped_artifacts/**/*"
           draft: true
           tag: ${{ github.event.inputs.tag }}
+          commit: ${{ github.event.workflow_run.head_sha }}
+          makeLatest: true
+          updateOnlyUnreleased: true
+          allowUpdates: true
