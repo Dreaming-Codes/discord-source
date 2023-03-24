@@ -41,10 +41,14 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Building bd plugin (ubuntu only since it's not platform dependent)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: pnpm run bundlebd:build
+
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
 
       - uses: actions/upload-artifact@v3
         with:
           name: "artifacts-${{ matrix.platform }}"
-          path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
+          path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}\n./dist-bd/DiscordSourcePlugin.plugin.js"
