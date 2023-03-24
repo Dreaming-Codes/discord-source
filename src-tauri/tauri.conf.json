@@ -60,7 +60,11 @@
       "csp": null
     },
     "updater": {
-      "active": false
+      "active": true,
+      "endpoints": [
+        "https://tauri-update-server.dreamingcodes.workers.dev/v1/{{target}}/{{arch}}/{{current_version}}"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENEN0QxRjJGRjY4NTVERkQKUldUOVhZWDJMeDk5emVrcFF0UURSejlXOU\nowY1g2Y0FnZkJnUndZbTUrZ1lNbEhaSUtTcHViNjEK"
     },
     "windows": [
       {
