@@ -150,39 +150,46 @@ function startDrawing(e: DragEvent) {
   window.addEventListener("mouseup", stopDrawing);
 }
 
-function imgLoad(){
+function imgLoad() {
   //TODO: Find a way that doesn't require a timeout
   //This is needed for now because vuetify doesn't update the DOM immediately after the image is loaded and using nextTick doesn't work
   setTimeout(handleRedraw, 100);
 }
+
+const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"];
+
+function getColor(id: number) {
+  return colors[id % colors.length];
+}
 </script>
 
 <template>
-  <v-container fluid class="fill-height">
+  <v-container class="fill-height" fluid>
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
         <div>
-          <v-img v-for="source in sources" :key="source" @load="imgLoad" @dragstart.prevent="startDrawing"
-                 :src="'https://picsum.photos/1920/1080?' + source"></v-img>
+          <v-img v-for="source in sources" :key="source" :src="'https://picsum.photos/1920/1080?' + source" @load="imgLoad"
+                 @dragstart.prevent="startDrawing"></v-img>
         </div>
       </v-col>
 
       <v-col cols="4">
         <div>
-          <v-img v-for="target in targets" :key="target" @load="imgLoad" @dragstart.prevent @mouseover="mouseOver" @mouseout="mouseOut"
-                 :src="'https://picsum.photos/1920/1080?' + target"></v-img>
+          <v-img v-for="target in targets" :key="target" :src="'https://picsum.photos/1920/1080?' + target" @load="imgLoad" @mouseout="mouseOut"
+                 @mouseover="mouseOver"
+                 @dragstart.prevent></v-img>
         </div>
       </v-col>
     </v-row>
     <svg id="lineDrawer" class="position-absolute fill-height w-100">
-      <line v-for="line in connections" :x1="line.source.connectionPoint.x" :y1="line.source.connectionPoint.y"
-            :x2="line.target.connectionPoint.x" :y2="line.target.connectionPoint.y"
-            stroke-width="1" stroke="white"/>
+      <line v-for="(line, index) in connections" :stroke="getColor(index)" :x1="line.source.connectionPoint.x"
+            :x2="line.target.connectionPoint.x" :y1="line.source.connectionPoint.y"
+            :y2="line.target.connectionPoint.y" stroke-width="1"/>
     </svg>
   </v-container>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
 #lineDrawer {
   pointer-events: none;
   left: 0;
