@@ -49,7 +49,7 @@ jobs:
         id: tauri_build
         env:
           TAURI_KEY_PASSWORD: ''
-          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_KEY_PASSWORD }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
 
       - uses: actions/upload-artifact@v3
         with:
