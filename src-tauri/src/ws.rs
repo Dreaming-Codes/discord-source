@@ -184,5 +184,5 @@ fn handle_message(message: Message) -> Status {
         }
     }
 
-    return Status::Unhandled(message);
+    Status::Unhandled(message)
 }
