@@ -4,6 +4,7 @@ use std::sync::Arc;
 use futures_util::lock::Mutex;
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::WebSocketStream;
@@ -13,9 +14,11 @@ use crate::ws::message::MessageType;
 
 mod message;
 
+type WebConnection = Arc<Mutex<WebSocketStream<TcpStream>>>;
+
 pub struct WebSocketServer<R: tauri::Runtime> {
     listener: Option<TcpListener>,
-    web_connections: HashMap<String, Arc<Mutex<WebSocketStream<TcpStream>>>>,
+    web_connections: Arc<RwLock<HashMap<String, WebConnection>>>,
     discord_connection: Arc<Mutex<Option<WebSocketStream<TcpStream>>>>,
     window: Option<tauri::Window<R>>,
 }
@@ -31,7 +34,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
         Self {
             listener: None,
             discord_connection: Arc::new(Mutex::new(None)),
-            web_connections: HashMap::new(),
+            web_connections: Arc::new(RwLock::new(HashMap::new())),
             window: None,
         }
     }
@@ -120,18 +123,18 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                     let _ = ws_stream.close(None).await;
                     continue;
                 }
-                if self.web_connections.contains_key(id) {
+                if self.web_connections.read().await.contains_key(id) {
                     warn!("Web connection already exists: {}", id);
                     let _ = ws_stream.close(None).await;
                     continue;
                 }
 
                 info!("Web connection established: {}", id);
-                self.web_connections.insert(id.to_string(), Arc::new(Mutex::new(ws_stream)));
-                let connection = self.web_connections.get_mut(id).unwrap();
-                let connection = connection.clone();
+                self.web_connections.write().await.insert(id.to_string(), Arc::new(Mutex::new(ws_stream)));
+                let connection = self.web_connections.read().await.get(id).unwrap().clone();
                 let window = self.window.clone().unwrap();
                 window.emit("web-added", id).unwrap();
+                let web_connections = self.web_connections.clone();
                 tauri::async_runtime::spawn({
                     let id = id.to_string();
                     async move {
@@ -158,6 +161,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                 }
                                 Status::Closed => {
                                     info!("Web connection closed: {}", id);
+                                    web_connections.write().await.remove(&id);
                                     window.emit("web-removed", id).unwrap();
                                     break;
                                 }
