@@ -3,13 +3,17 @@ all(not(debug_assertions), target_os = "windows"),
 windows_subsystem = "windows"
 )]
 
+use std::collections::HashMap;
+use std::ops::Deref;
+use std::sync::Arc;
 use parking_lot::Mutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
+use tokio::sync::RwLock;
 use tracing::error;
 
 use crate::bd::BdSettings;
 use crate::web::WebServer;
-use crate::ws::WebSocketServer;
+use crate::ws::{DiscordStreams, WebConnections, WebSocketServer};
 
 mod ws;
 mod web;
@@ -72,9 +76,6 @@ async fn main() {
 
     let config = Mutex::new(Config::load());
 
-    let mut ws_server = WebSocketServer::new();
-    let mut web_server = WebServer::new();
-
     tauri::async_runtime::set(tokio::runtime::Handle::current());
 
     let quit = CustomMenuItem::new("quit".to_string(), "Quit");
@@ -89,6 +90,8 @@ async fn main() {
             config,
             bd_settings: Mutex::new(None),
         })
+        .manage::<WebConnections>(Arc::new(RwLock::new(HashMap::new())))
+        .manage::<DiscordStreams>(Arc::new(RwLock::new(Vec::new())))
         .system_tray(SystemTray::new().with_menu(tray_menu))
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => {
@@ -114,8 +117,17 @@ async fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config])
+        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config, get_streams, get_targets])
         .setup(|app| {
+            let discord_streams: tauri::State<'_, DiscordStreams> = app.state();
+            let web_connections: tauri::State<'_, WebConnections> = app.state();
+
+            let discord_streams = Arc::clone(&discord_streams);
+            let web_connections = Arc::clone(&web_connections);
+
+            let mut ws_server = WebSocketServer::new(discord_streams, web_connections);
+            let mut web_server = WebServer::new();
+
             let cfg: tauri::State<'_, State> = app.state();
 
             ws_server.set_window(app.get_window("main").unwrap());
@@ -158,6 +170,18 @@ async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), (
     cfg.web_port = port;
     cfg.save();
     Ok(())
+}
+
+#[tauri::command]
+async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<Vec<String>, ()> {
+    let web_connections = web_connections.read().await;
+    Ok(web_connections.keys().cloned().collect())
+}
+
+#[tauri::command]
+async fn get_streams(discord_streams: tauri::State<'_, DiscordStreams>) -> Result<Vec<u8>, ()> {
+    let discord_streams = discord_streams.read().await;
+    Ok(discord_streams.clone())
 }
 
 //TODO: Handle errors sensing the error to the UI and asking the user to change the port

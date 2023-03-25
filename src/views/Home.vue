@@ -2,6 +2,7 @@
 import {appWindow} from "@tauri-apps/api/window";
 import {nextTick, onMounted, onUnmounted, reactive} from "vue";
 import {watchArray} from "@vueuse/core";
+import {invoke} from "@tauri-apps/api/tauri";
 
 interface Connection {
   source: BoundedElement,
@@ -19,7 +20,21 @@ interface BoundedElement {
 const connections = reactive<Connection[]>([]);
 
 const sources = reactive<number[]>([]);
-const targets = reactive<number[]>([]);
+const targets = reactive<string[]>([]);
+
+//Init with backend targets
+invoke("get_targets").then((remote_targets) => {
+  (remote_targets as string[]).forEach((target) => {
+    targets.push(target);
+  })
+})
+
+//Init with backend streams
+invoke("get_streams").then((remote_sources) => {
+  (remote_sources as number[]).forEach((source) => {
+    sources.push(source);
+  })
+})
 
 watchArray([sources, targets], async () => {
   handleRedraw();
