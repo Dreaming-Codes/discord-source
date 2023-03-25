@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 specifiers:
+  '@formkit/auto-animate': 1.0.0-beta.6
   '@mdi/font': ^7.2.96
   '@tauri-apps/api': ^1.2.0
   '@tauri-apps/cli': ^1.2.3
@@ -28,6 +29,7 @@ specifiers:
   webfontloader: ^1.6.28
 
 dependencies:
+  '@formkit/auto-animate': 1.0.0-beta.6
   '@mdi/font': 7.2.96
   '@tauri-apps/api': 1.2.0
   roboto-fontface: 0.10.0
@@ -1506,6 +1508,10 @@ packages:
     os: [win32]
     requiresBuild: true
     optional: true
+
+  /@formkit/auto-animate/1.0.0-beta.6:
+    resolution: {integrity: sha512-PVDhLAlr+B4Xb7e+1wozBUWmXa6BFU8xUPR/W/E+TsQhPS1qkAdAsJ25keEnFrcePSnXHrOsh3tiFbEToOzV9w==}
+    dev: false
 
   /@jridgewell/gen-mapping/0.1.1:
     resolution: {integrity: sha512-sQXCasFk+U8lWYEe66WxRDOE9PjVz4vSM51fTu3Hw+ClTpUSQb718772vH3pyS5pShp6lvQM7SxgIDXXXmOX7w==}

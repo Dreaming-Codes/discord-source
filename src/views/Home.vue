@@ -167,15 +167,15 @@ function getColor(id: number) {
   <v-container class="fill-height" fluid>
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
-        <div>
+        <div v-auto-animate>
           <v-img v-for="source in sources" :key="source" :src="'https://picsum.photos/1920/1080?' + source" @load="imgLoad"
                  @dragstart.prevent="startDrawing"></v-img>
         </div>
       </v-col>
 
       <v-col cols="4">
-        <div>
-          <v-img v-for="target in targets" :key="target" :src="'https://picsum.photos/1920/1080?' + target" @load="imgLoad" @mouseout="mouseOut"
+        <div v-auto-animate>
+          <v-img v-for="target in targets.sort()" :key="target" :src="'https://picsum.photos/1920/1080?' + target" @load="imgLoad" @mouseout="mouseOut"
                  @mouseover="mouseOver"
                  @dragstart.prevent></v-img>
         </div>
