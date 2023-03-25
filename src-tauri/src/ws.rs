@@ -48,18 +48,26 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
         self.window = Some(window);
     }
 
-    pub async fn accept_connections(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn accept_connections(&mut self) {
         loop {
-            let (raw_tcp_stream, _) = self.listener.as_ref().unwrap().accept().await?;
+            let listener = self.listener.as_ref().unwrap().accept().await;
+
+            let Ok((raw_tcp_stream, _)) = listener else {
+                continue;
+            };
 
             let mut uri = String::new();
 
-            let mut ws_stream = tokio_tungstenite::accept_hdr_async(raw_tcp_stream, |request: &Request, response: Response| -> Result<Response, ErrorResponse> {
+            let ws_stream = tokio_tungstenite::accept_hdr_async(raw_tcp_stream, |request: &Request, response: Response| -> Result<Response, ErrorResponse> {
                 info!("WS connection request: {:?}", request.uri());
                 uri = request.uri().to_string();
 
                 Ok(response)
-            }).await?;
+            }).await;
+
+            let Ok(mut ws_stream) = ws_stream else {
+                continue;
+            };
 
             if uri == "/discord" {
                 let discord_connection = self.discord_connection.clone();

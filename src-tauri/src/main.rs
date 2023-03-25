@@ -163,8 +163,8 @@ async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), (
 //TODO: Handle errors sensing the error to the UI and asking the user to change the port
 fn bind_servers<R: tauri::Runtime>(mut ws_server: WebSocketServer<R>, mut web_server: WebServer, ws_port: u16, web_port: u16) {
     tauri::async_runtime::spawn(async move {
-        ws_server.bind(ws_port.clone()).await.expect("Failed to bind WS server");
-        ws_server.accept_connections().await.expect("Failed to accept WS connections");
+        ws_server.bind(ws_port).await.expect("Failed to bind WS server");
+        ws_server.accept_connections().await;
     });
     tauri::async_runtime::spawn(async move {
         web_server.bind(web_port, ws_port).await.expect("Failed to bind Web server");
