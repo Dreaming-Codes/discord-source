@@ -36,9 +36,7 @@ invoke("get_streams").then((remote_sources) => {
   })
 })
 
-watchArray([sources, targets], async () => {
-  handleRedraw();
-}, {
+watchArray([sources, targets], handleRedraw, {
   flush: "post",
 })
 
@@ -54,11 +52,11 @@ appWindow.listen("stream-removed", (event) => {
 })
 
 appWindow.listen("web-added", (event) => {
-  targets.push(event.payload as number);
+  targets.push(event.payload as string);
 })
 
 appWindow.listen("web-removed", (event) => {
-  const index = targets.indexOf(event.payload as number);
+  const index = targets.indexOf(event.payload as string);
   if (index > -1) {
     targets.splice(index, 1);
   }
