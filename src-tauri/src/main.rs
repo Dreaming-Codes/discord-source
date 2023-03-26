@@ -4,8 +4,9 @@ windows_subsystem = "windows"
 )]
 
 use std::collections::HashMap;
-use std::ops::Deref;
 use std::sync::Arc;
+
+use futures_util::future::join_all;
 use parking_lot::Mutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::RwLock;
@@ -173,9 +174,26 @@ async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), (
 }
 
 #[tauri::command]
-async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<Vec<String>, ()> {
+async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<HashMap<String, Vec<u8>>, ()> {
     let web_connections = web_connections.read().await;
-    Ok(web_connections.keys().cloned().collect())
+
+    let tasks = web_connections
+        .iter()
+        .map(|(id, conn)| {
+            let id = id.clone();
+            let linked_streams = conn.linked_streams.clone();
+            tokio::spawn(async move {
+                let linked_streams = linked_streams.read().await.clone();
+                (id, linked_streams)
+            })
+        })
+        .collect::<Vec<_>>();
+
+    Ok(join_all(tasks).await
+        .into_iter()
+        .map(|res| res.unwrap())
+        .collect::<HashMap<String, Vec<u8>>>()
+    )
 }
 
 #[tauri::command]

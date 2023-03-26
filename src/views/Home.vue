@@ -20,12 +20,13 @@ interface BoundedElement {
 const connections = reactive<Connection[]>([]);
 
 const sources = reactive<number[]>([]);
-const targets = reactive<string[]>([]);
+const targets = reactive<Map<string, number[]>>(new Map<string, number[]>());
 
 //Init with backend targets
 invoke("get_targets").then((remote_targets) => {
-  (remote_targets as string[]).forEach((target) => {
-    targets.push(target);
+  console.log(remote_targets);
+  Object.entries(remote_targets as { [key: string]: number[] }).forEach(([key, linked_streams]) => {
+    targets.set(key, linked_streams);
   })
 })
 
@@ -52,14 +53,11 @@ appWindow.listen("stream-removed", (event) => {
 })
 
 appWindow.listen("web-added", (event) => {
-  targets.push(event.payload as string);
+  targets.set(event.payload as string, []);
 })
 
 appWindow.listen("web-removed", (event) => {
-  const index = targets.indexOf(event.payload as string);
-  if (index > -1) {
-    targets.splice(index, 1);
-  }
+  targets.delete(event.payload as string);
 })
 
 let hoveredElement: BoundedElement | null = null;
@@ -181,14 +179,16 @@ function getColor(id: number) {
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="source in sources" :key="source" :src="'https://picsum.photos/1920/1080?' + source" @load="imgLoad"
+          <v-img v-for="source in sources" :key="source" :src="'https://picsum.photos/1920/1080?' + source"
+                 @load="imgLoad"
                  @dragstart.prevent="startDrawing"></v-img>
         </div>
       </v-col>
 
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="target in targets.sort()" :key="target" :src="'https://picsum.photos/1920/1080?' + target" @load="imgLoad" @mouseout="mouseOut"
+          <v-img v-for="target in targets" :key="target" :src="'https://picsum.photos/1920/1080?' + target"
+                 @load="imgLoad" @mouseout="mouseOut"
                  @mouseover="mouseOver"
                  @dragstart.prevent></v-img>
         </div>
