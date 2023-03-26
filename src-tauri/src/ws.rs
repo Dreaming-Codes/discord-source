@@ -15,9 +15,15 @@ use crate::ws::message::MessageType;
 
 mod message;
 
-type WebConnection = Arc<Mutex<WebSocketStream<TcpStream>>>;
+pub struct WebConnection {
+    ws: Arc<Mutex<WebSocketStream<TcpStream>>>,
+    pub linked_streams: Arc<RwLock<Vec<u8>>>,
+}
+
+
 pub type WebConnections = Arc<RwLock<HashMap<String, WebConnection>>>;
 pub type DiscordStreams = Arc<RwLock<Vec<u8>>>;
+
 
 pub struct WebSocketServer<R: tauri::Runtime> {
     listener: Option<TcpListener>,
@@ -138,8 +144,11 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 }
 
                 info!("Web connection established: {}", id);
-                self.web_connections.write().await.insert(id.to_string(), Arc::new(Mutex::new(ws_stream)));
-                let connection = self.web_connections.read().await.get(id).unwrap().clone();
+                self.web_connections.write().await.insert(id.to_string(), WebConnection {
+                    ws: Arc::new(Mutex::new(ws_stream)),
+                    linked_streams: Arc::new(RwLock::new(Vec::new())),
+                });
+                let connection = self.web_connections.read().await.get(id).unwrap().ws.clone();
                 let window = self.window.clone().unwrap();
                 window.emit("web-added", id).unwrap();
                 let web_connections = self.web_connections.clone();
