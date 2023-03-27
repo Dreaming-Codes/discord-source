@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import {appWindow} from "@tauri-apps/api/window";
-import {nextTick, onMounted, onUnmounted, reactive} from "vue";
+import {nextTick, onMounted, onUnmounted, reactive, ref, Ref, VueElement, watch} from "vue";
 import {watchArray} from "@vueuse/core";
 import {invoke} from "@tauri-apps/api/tauri";
+import type {VImg} from "vuetify/components/VImg";
 
 interface Connection {
   source: BoundedElement,
@@ -17,23 +18,80 @@ interface BoundedElement {
   };
 }
 
+let isMounted = false;
+
 const connections = reactive<Connection[]>([]);
 
-const sources = reactive<number[]>([]);
-const targets = reactive<Map<string, number[]>>(new Map<string, number[]>());
+interface Target {
+}
+
+interface Stream {
+}
+
+const sourceElements: Ref<VImg[] | null> = ref(null);
+const targetElements: Ref<VImg[] | null> = ref(null);
+
+const sources = reactive<Map<number, Stream>>(new Map<number, Stream>());
+const targets = reactive<Map<string, Target>>(new Map<string, Target>());
+
+//Init with backend streams
+invoke("get_streams").then((remote_sources) => {
+  (remote_sources as number[]).forEach((source) => {
+    sources.set(source, {});
+  })
+})
 
 //Init with backend targets
 invoke("get_targets").then((remote_targets) => {
   console.log(remote_targets);
   Object.entries(remote_targets as { [key: string]: number[] }).forEach(([key, linked_streams]) => {
-    targets.set(key, linked_streams);
-  })
-})
+    if(linked_streams.length > 0){
 
-//Init with backend streams
-invoke("get_streams").then((remote_sources) => {
-  (remote_sources as number[]).forEach((source) => {
-    sources.push(source);
+      const unwatch = watch(targetElements, (newTargetElements) => {
+
+        //Search element with matching data-id
+        newTargetElements?.every((elem)=>{
+          if(elem.$attrs["data-id"] == key){
+            //Stop watching for new elements
+            unwatch();
+
+            //Create a connection for each linked stream
+            linked_streams.forEach((linkedStreamId)=>{
+              //Get the source element
+              const sourceElement = sourceElements?.value?.find((elem)=>elem.$attrs["data-id"] == linkedStreamId)!.$el as HTMLElement;
+
+              connections.push({
+                source: {
+                  element: sourceElement,
+                  connectionPoint: {
+                    x: 0,
+                    y: 0,
+                  }
+                },
+                target: {
+                  element: elem.$el as HTMLElement,
+                  connectionPoint: {
+                    x: 0,
+                    y: 0,
+                  }
+                }
+              })
+
+              handleRedraw();
+            })
+
+            //Break out of loop
+            return false;
+          }
+        })
+
+      }, {
+        flush: "post",
+      })
+    }
+
+
+    targets.set(key, {});
   })
 })
 
@@ -42,18 +100,15 @@ watchArray([sources, targets], handleRedraw, {
 })
 
 appWindow.listen("stream-added", (event) => {
-  sources.push(event.payload as number);
+  sources.set(event.payload as number, {});
 })
 
 appWindow.listen("stream-removed", (event) => {
-  const index = sources.indexOf(event.payload as number);
-  if (index > -1) {
-    sources.splice(index, 1);
-  }
+  sources.delete(event.payload as number);
 })
 
 appWindow.listen("web-added", (event) => {
-  targets.set(event.payload as string, []);
+  targets.set(event.payload as string, {});
 })
 
 appWindow.listen("web-removed", (event) => {
@@ -63,10 +118,12 @@ appWindow.listen("web-removed", (event) => {
 let hoveredElement: BoundedElement | null = null;
 
 onMounted(() => {
+  isMounted = true;
   window.addEventListener("resize", handleRedraw)
 })
 
 onUnmounted(() => {
+  isMounted = false;
   window.removeEventListener("resize", handleRedraw)
 })
 
@@ -94,7 +151,7 @@ async function handleRedraw() {
 }
 
 function mouseOver(e: MouseEvent) {
-  const element = e.target as HTMLElement;
+  const element = (e.target as HTMLElement).parentElement!;
   const rect = element.getBoundingClientRect();
   hoveredElement = {
     element,
@@ -110,12 +167,12 @@ function mouseOut() {
 }
 
 function startDrawing(e: DragEvent) {
-  const targetImg = e.target as HTMLImageElement;
-  const imgRect = targetImg.getBoundingClientRect();
+  const targetElement = (e.target as HTMLImageElement).parentElement!;
+  const imgRect = targetElement.getBoundingClientRect();
 
   let currentLine = reactive<Connection>({
     source: {
-      element: targetImg,
+      element: targetElement,
       connectionPoint: {
         x: imgRect.right,
         y: imgRect.top + imgRect.height / 2,
@@ -147,12 +204,32 @@ function startDrawing(e: DragEvent) {
     } else {
       //Find existing connection
       const existingConnection = connections.filter((connection) => connection.target.element === hoveredElement?.element && connection.source.element === currentLine.source.element);
+
+      const targetId = hoveredElement?.element?.parentElement?.dataset.id as string;
+      const sourceId = Number(targetElement.parentElement?.dataset.id);
+
       //Remove current and existing connection if they exist
       if (existingConnection.length > 1) {
         connections.splice(connections.indexOf(currentLine), 1);
         connections.splice(connections.indexOf(existingConnection[0]), 1);
+
+        console.log("Removing existing connection", sourceId, targetId);
+        //Remove existing connection from backend
+        appWindow.emit("unlink-stream", {
+          target: targetId,
+          source: sourceId,
+        });
+      }else{
+        console.log("No existing connection found, creating new one", sourceId, targetId);
+        appWindow.emit("link-stream", {
+          target: targetId,
+          source: sourceId,
+        });
       }
     }
+
+
+
     window.removeEventListener("mousemove", updateLine);
     window.removeEventListener("mouseup", stopDrawing);
   }
@@ -179,7 +256,7 @@ function getColor(id: number) {
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="source in sources" :key="source" :src="'https://picsum.photos/1920/1080?' + source"
+          <v-img v-for="[key, source] in sources" :key="key" :data-id="key" ref="sourceElements" :src="'https://picsum.photos/1920/1080?' + key"
                  @load="imgLoad"
                  @dragstart.prevent="startDrawing"></v-img>
         </div>
@@ -187,8 +264,9 @@ function getColor(id: number) {
 
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="target in targets" :key="target" :src="'https://picsum.photos/1920/1080?' + target"
-                 @load="imgLoad" @mouseout="mouseOut"
+          <v-img v-for="[key, target] in targets" :key="key" :data-id="key" ref="targetElements" :src="'https://picsum.photos/1920/1080?' + key"
+                 @load="imgLoad"
+                 @mouseout="mouseOut"
                  @mouseover="mouseOver"
                  @dragstart.prevent></v-img>
         </div>

@@ -10,7 +10,7 @@ use futures_util::future::join_all;
 use parking_lot::Mutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::RwLock;
-use tracing::error;
+use tracing::{error, info};
 
 use crate::bd::BdSettings;
 use crate::web::WebServer;
@@ -55,6 +55,12 @@ impl Config {
 struct State {
     config: Mutex<Config>,
     bd_settings: Mutex<Option<BdSettings>>,
+}
+
+#[derive(serde::Deserialize)]
+struct LinkEvent {
+    source: u8,
+    target: String,
 }
 
 #[tokio::main]
@@ -126,10 +132,33 @@ async fn main() {
             let discord_streams = Arc::clone(&discord_streams);
             let web_connections = Arc::clone(&web_connections);
 
-            let mut ws_server = WebSocketServer::new(discord_streams, web_connections);
+            let mut ws_server = WebSocketServer::new(discord_streams, web_connections.clone());
             let mut web_server = WebServer::new();
 
             let cfg: tauri::State<'_, State> = app.state();
+
+            app.listen_global("link-stream", {
+                let web_connections = web_connections.clone();
+                move |event| {
+                    let data: LinkEvent = serde_json::from_str(event.payload().unwrap()).unwrap();
+                    info!("Link stream event: {:?}", event.payload());
+                    let web_connections = web_connections.clone();
+                    tauri::async_runtime::spawn(async move {
+                        //TODO: Actually do the webrtc handshake
+                        web_connections.write().await.get(&data.target).unwrap().linked_streams.write().await.push(data.source);
+                    });
+                }
+            });
+
+            app.listen_global("unlink-stream", move |event| {
+                let data: LinkEvent = serde_json::from_str(event.payload().unwrap()).unwrap();
+                info!("Unlink stream event: {:?}", event.payload());
+                let web_connections = web_connections.clone();
+                tauri::async_runtime::spawn(async move {
+                    //TODO: Actually unlink the stream
+                    web_connections.write().await.get(&data.target).unwrap().linked_streams.write().await.retain(|&x| x != data.source);
+                });
+            });
 
             ws_server.set_window(app.get_window("main").unwrap());
 
