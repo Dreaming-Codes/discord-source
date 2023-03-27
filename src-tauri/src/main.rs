@@ -183,8 +183,7 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
             let id = id.clone();
             let linked_streams = conn.linked_streams.clone();
             tokio::spawn(async move {
-                let linked_streams = linked_streams.read().await.clone();
-                (id, linked_streams)
+                (id, linked_streams.read().await.clone())
             })
         })
         .collect::<Vec<_>>();
