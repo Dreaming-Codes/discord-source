@@ -103,6 +103,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                             Status::Ok(event) => {
                                 match event {
                                     MessageType::Add(stream) => {
+                                        info!("Added stream: {:?}", stream);
                                         discord_streams.write().await.push(stream.stream_id);
                                         window.emit("stream-added", stream.stream_id).unwrap();
                                     }
