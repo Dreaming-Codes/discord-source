@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import {appWindow} from "@tauri-apps/api/window";
-import {nextTick, onMounted, onUnmounted, reactive, ref, Ref, VueElement, watch} from "vue";
+import {nextTick, onMounted, onUnmounted, reactive, ref, Ref, watch} from "vue";
 import {watchArray} from "@vueuse/core";
 import {invoke} from "@tauri-apps/api/tauri";
 import type {VImg} from "vuetify/components/VImg";
@@ -44,41 +44,38 @@ invoke("get_streams").then((remote_sources) => {
 //Init with backend targets
 invoke("get_targets").then((remote_targets) => {
   console.log(remote_targets);
-  Object.entries(remote_targets as { [key: string]: number[] }).forEach(([key, linked_streams]) => {
-    if(linked_streams.length > 0){
+  Object.entries(remote_targets as { [key: string]: number | null }).forEach(([key, linked_stream]) => {
+    if (linked_stream) {
 
       const unwatch = watch(targetElements, (newTargetElements) => {
 
         //Search element with matching data-id
-        newTargetElements?.every((elem)=>{
-          if(elem.$attrs["data-id"] == key){
+        newTargetElements?.every((elem) => {
+          if (elem.$attrs["data-id"] == key) {
             //Stop watching for new elements
             unwatch();
 
-            //Create a connection for each linked stream
-            linked_streams.forEach((linkedStreamId)=>{
-              //Get the source element
-              const sourceElement = sourceElements?.value?.find((elem)=>elem.$attrs["data-id"] == linkedStreamId)!.$el as HTMLElement;
+            //Get the source element
+            const sourceElement = sourceElements?.value?.find((elem) => elem.$attrs["data-id"] == linked_stream)!.$el as HTMLElement;
 
-              connections.push({
-                source: {
-                  element: sourceElement,
-                  connectionPoint: {
-                    x: 0,
-                    y: 0,
-                  }
-                },
-                target: {
-                  element: elem.$el as HTMLElement,
-                  connectionPoint: {
-                    x: 0,
-                    y: 0,
-                  }
+            connections.push({
+              source: {
+                element: sourceElement,
+                connectionPoint: {
+                  x: 0,
+                  y: 0,
                 }
-              })
-
-              handleRedraw();
+              },
+              target: {
+                element: elem.$el as HTMLElement,
+                connectionPoint: {
+                  x: 0,
+                  y: 0,
+                }
+              }
             })
+
+            handleRedraw();
 
             //Break out of loop
             return false;
@@ -203,23 +200,32 @@ function startDrawing(e: DragEvent) {
       connections.pop();
     } else {
       //Find existing connection
-      const existingConnection = connections.filter((connection) => connection.target.element === hoveredElement?.element && connection.source.element === currentLine.source.element);
+      const existingConnection = connections.filter((connection) => connection.target.element === hoveredElement?.element);
 
       const targetId = hoveredElement?.element?.dataset.id as string;
-      const sourceId = Number(targetElement.dataset.id);
 
       //Remove current and existing connection if they exist
       if (existingConnection.length > 1) {
-        connections.splice(connections.indexOf(currentLine), 1);
-        connections.splice(connections.indexOf(existingConnection[0]), 1);
-
-        console.log("Removing existing connection", sourceId, targetId);
         //Remove existing connection from backend
         appWindow.emit("unlink-stream", {
-          target: targetId,
-          source: sourceId,
+          target: targetId
         });
-      }else{
+
+        if(existingConnection[0].source.element?.dataset.id == targetElement.dataset.id){
+          connections.splice(connections.indexOf(currentLine), 1);
+        }else{
+          appWindow.emit("link-stream", {
+            target: targetId,
+            source: Number(existingConnection[0].source.element?.dataset.id),
+          });
+        }
+
+        connections.splice(connections.indexOf(existingConnection[0]), 1);
+
+        console.log("Removing existing connection", targetId);
+      } else {
+        const sourceId = Number(targetElement.dataset.id);
+
         console.log("No existing connection found, creating new one", sourceId, targetId);
         appWindow.emit("link-stream", {
           target: targetId,
@@ -227,7 +233,6 @@ function startDrawing(e: DragEvent) {
         });
       }
     }
-
 
 
     window.removeEventListener("mousemove", updateLine);
@@ -256,7 +261,8 @@ function getColor(id: number) {
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="[key, source] in sources" :key="key" :data-id="key" ref="sourceElements" :src="'https://picsum.photos/1920/1080?' + key"
+          <v-img v-for="[key, source] in sources" :key="key" :data-id="key" ref="sourceElements"
+                 :src="'https://picsum.photos/1920/1080?' + key"
                  @load="imgLoad"
                  @dragstart.prevent="startDrawing"></v-img>
         </div>
@@ -264,7 +270,8 @@ function getColor(id: number) {
 
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="[key, target] in targets" :key="key" :data-id="key" ref="targetElements" :src="'https://picsum.photos/1920/1080?' + key"
+          <v-img v-for="[key, target] in targets" :key="key" :data-id="key" ref="targetElements"
+                 :src="'https://picsum.photos/1920/1080?' + key"
                  @load="imgLoad"
                  @mouseout="mouseOut"
                  @mouseover="mouseOver"

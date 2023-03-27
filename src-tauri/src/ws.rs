@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use futures_util::lock::Mutex;
 use futures_util::StreamExt;
-use tauri::State;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
@@ -17,7 +16,7 @@ mod message;
 
 pub struct WebConnection {
     ws: Arc<Mutex<WebSocketStream<TcpStream>>>,
-    pub linked_streams: Arc<RwLock<Vec<u8>>>,
+    pub linked_stream: Arc<RwLock<Option<u8>>>,
 }
 
 
@@ -147,7 +146,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 info!("Web connection established: {}", id);
                 self.web_connections.write().await.insert(id.to_string(), WebConnection {
                     ws: Arc::new(Mutex::new(ws_stream)),
-                    linked_streams: Arc::new(RwLock::new(Vec::new())),
+                    linked_stream: Arc::new(RwLock::new(None)),
                 });
                 let connection = self.web_connections.read().await.get(id).unwrap().ws.clone();
                 let window = self.window.clone().unwrap();

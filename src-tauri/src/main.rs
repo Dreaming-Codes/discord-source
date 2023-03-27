@@ -59,7 +59,7 @@ struct State {
 
 #[derive(serde::Deserialize)]
 struct LinkEvent {
-    source: u8,
+    source: Option<u8>,
     target: String,
 }
 
@@ -145,7 +145,7 @@ async fn main() {
                     let web_connections = web_connections.clone();
                     tauri::async_runtime::spawn(async move {
                         //TODO: Actually do the webrtc handshake
-                        web_connections.write().await.get(&data.target).unwrap().linked_streams.write().await.push(data.source);
+                        let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().await.insert(data.source.unwrap());
                     });
                 }
             });
@@ -156,7 +156,7 @@ async fn main() {
                 let web_connections = web_connections.clone();
                 tauri::async_runtime::spawn(async move {
                     //TODO: Actually unlink the stream
-                    web_connections.write().await.get(&data.target).unwrap().linked_streams.write().await.retain(|&x| x != data.source);
+                    let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().await.take();
                 });
             });
 
@@ -203,16 +203,16 @@ async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), (
 }
 
 #[tauri::command]
-async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<HashMap<String, Vec<u8>>, ()> {
+async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<HashMap<String, Option<u8>>, ()> {
     let web_connections = web_connections.read().await;
 
     let tasks = web_connections
         .iter()
         .map(|(id, conn)| {
             let id = id.clone();
-            let linked_streams = conn.linked_streams.clone();
+            let linked_stream = conn.linked_stream.clone();
             tokio::spawn(async move {
-                (id, linked_streams.read().await.clone())
+                (id, linked_stream.read().await.clone())
             })
         })
         .collect::<Vec<_>>();
@@ -220,7 +220,7 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
     Ok(join_all(tasks).await
         .into_iter()
         .map(|res| res.unwrap())
-        .collect::<HashMap<String, Vec<u8>>>()
+        .collect::<HashMap<String, Option<u8>>>()
     )
 }
 
