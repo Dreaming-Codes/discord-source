@@ -205,8 +205,8 @@ function startDrawing(e: DragEvent) {
       //Find existing connection
       const existingConnection = connections.filter((connection) => connection.target.element === hoveredElement?.element && connection.source.element === currentLine.source.element);
 
-      const targetId = hoveredElement?.element?.parentElement?.dataset.id as string;
-      const sourceId = Number(targetElement.parentElement?.dataset.id);
+      const targetId = hoveredElement?.element?.dataset.id as string;
+      const sourceId = Number(targetElement.dataset.id);
 
       //Remove current and existing connection if they exist
       if (existingConnection.length > 1) {
