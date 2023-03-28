@@ -156,6 +156,7 @@ async fn main() {
                 info!("Unlink stream event: {:?}", event.payload());
                 let web_connections = web_connections.clone();
                 tauri::async_runtime::spawn(async move {
+                    //TODO: Avoid reloading the page to unlink the stream
                     let _ = web_connections.write().await.get(&data.target).unwrap().ws_sink.lock().await.close().await;
                 });
             });
