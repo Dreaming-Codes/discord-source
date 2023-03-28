@@ -15,7 +15,7 @@ use crate::ws::message::MessageType;
 mod message;
 
 pub struct WebConnection {
-    ws: Arc<Mutex<WebSocketStream<TcpStream>>>,
+    pub ws: Arc<Mutex<WebSocketStream<TcpStream>>>,
     pub linked_stream: Arc<RwLock<Option<u8>>>,
 }
 

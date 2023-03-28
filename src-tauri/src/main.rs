@@ -155,8 +155,8 @@ async fn main() {
                 info!("Unlink stream event: {:?}", event.payload());
                 let web_connections = web_connections.clone();
                 tauri::async_runtime::spawn(async move {
-                    //TODO: Actually unlink the stream
-                    let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().await.take();
+                    //Closing the connection will cause the web page to reloading unlinking the stream
+                    let _ = web_connections.write().await.get(&data.target).unwrap().ws.lock().await.close(None).await;
                 });
             });
 
@@ -212,7 +212,7 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
             let id = id.clone();
             let linked_stream = conn.linked_stream.clone();
             tokio::spawn(async move {
-                (id, linked_stream.read().await.clone())
+                (id, *linked_stream.read().await)
             })
         })
         .collect::<Vec<_>>();
