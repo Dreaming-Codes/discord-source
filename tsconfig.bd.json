@@ -12,6 +12,8 @@
   },
   "include": [
     "src-bd/**/*",
-    "src-bd/*"
+    "src-bd/*",
+    "src-tauri/bindings/**/*",
+    "shared/**/*"
   ]
 }

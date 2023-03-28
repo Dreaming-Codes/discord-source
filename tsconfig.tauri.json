@@ -5,6 +5,7 @@
     "sourceMap": false
   },
   "include": [
-    "src-tauri/**/*"
+    "src-tauri/**/*",
+    "shared/**/*",
   ]
 }
