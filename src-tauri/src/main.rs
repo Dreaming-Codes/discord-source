@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures_util::future::join_all;
+use futures_util::SinkExt;
 use parking_lot::Mutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::RwLock;
@@ -155,8 +156,7 @@ async fn main() {
                 info!("Unlink stream event: {:?}", event.payload());
                 let web_connections = web_connections.clone();
                 tauri::async_runtime::spawn(async move {
-                    //Closing the connection will cause the web page to reloading unlinking the stream
-                    let _ = web_connections.write().await.get(&data.target).unwrap().ws.lock().await.close(None).await;
+                    let _ = web_connections.write().await.get(&data.target).unwrap().ws_sink.lock().await.close().await;
                 });
             });
 

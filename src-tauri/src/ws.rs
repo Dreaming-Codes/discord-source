@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures_util::lock::Mutex;
+use futures_util::stream::{SplitSink, SplitStream};
 use futures_util::StreamExt;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
@@ -15,7 +16,8 @@ use crate::ws::message::MessageType;
 mod message;
 
 pub struct WebConnection {
-    pub ws: Arc<Mutex<WebSocketStream<TcpStream>>>,
+    pub ws_sink: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
+    pub ws_stream: Arc<Mutex<SplitStream<WebSocketStream<TcpStream>>>>,
     pub linked_stream: Arc<RwLock<Option<u8>>>,
 }
 
@@ -144,11 +146,14 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 }
 
                 info!("Web connection established: {}", id);
+                let (ws_sink, ws_stream) = ws_stream.split();
+
                 self.web_connections.write().await.insert(id.to_string(), WebConnection {
-                    ws: Arc::new(Mutex::new(ws_stream)),
+                    ws_sink: Arc::new(Mutex::new(ws_sink)),
+                    ws_stream: Arc::new(Mutex::new(ws_stream)),
                     linked_stream: Arc::new(RwLock::new(None)),
                 });
-                let connection = self.web_connections.read().await.get(id).unwrap().ws.clone();
+                let connection = self.web_connections.read().await.get(id).unwrap().ws_stream.clone();
                 let window = self.window.clone().unwrap();
                 window.emit("web-added", id).unwrap();
                 let web_connections = self.web_connections.clone();
