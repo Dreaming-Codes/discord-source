@@ -199,38 +199,38 @@ function startDrawing(e: DragEvent) {
     if (!hoveredElement) {
       connections.pop();
     } else {
-      //Find existing connection
-      const existingConnection = connections.filter((connection) => connection.target.element === hoveredElement?.element);
+      //Find existing connection on target
+      const existingConnectionTarget = connections.filter((connection) => connection.target.element === hoveredElement?.element);
+      //Find existing connection on source
+      const existingConnectionSource = connections.filter((connection) => connection.source.element === targetElement);
+
+      console.log(existingConnectionSource.length, existingConnectionTarget.length);
 
       const targetId = hoveredElement?.element?.dataset.id as string;
 
-      //Remove current and existing connection if they exist
-      if (existingConnection.length > 1) {
-        //Remove existing connection from backend
+      const sourceId = Number(targetElement.dataset.id);
+
+
+      //If source and target are already connected, remove the connection
+      if (existingConnectionSource.length > 1 && existingConnectionTarget.length > 1 && existingConnectionSource[1].target.element === existingConnectionSource[0].target.element) {
+        connections.splice(connections.indexOf(existingConnectionSource[0]), 1);
+        connections.pop();
         appWindow.emit("unlink-stream", {
           target: targetId
         });
 
-        if(existingConnection[0].source.element?.dataset.id == targetElement.dataset.id){
-          connections.splice(connections.indexOf(currentLine), 1);
-        }else{
-          appWindow.emit("link-stream", {
-            target: targetId,
-            source: Number(existingConnection[0].source.element?.dataset.id),
-          });
-        }
+        console.log("Unlinking stream", sourceId, "from", targetId);
+      } else if (existingConnectionSource.length === 1 && existingConnectionTarget.length === 1) {
+        //If source and target are not connected to any other stream, create a connection
 
-        connections.splice(connections.indexOf(existingConnection[0]), 1);
-
-        console.log("Removing existing connection", targetId);
-      } else {
-        const sourceId = Number(targetElement.dataset.id);
-
-        console.log("No existing connection found, creating new one", sourceId, targetId);
         appWindow.emit("link-stream", {
           target: targetId,
           source: sourceId,
         });
+        console.log("Linking stream", sourceId, "to", targetId);
+      } else {
+        connections.pop();
+        console.log("Invalid connection")
       }
     }
 
