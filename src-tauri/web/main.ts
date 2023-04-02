@@ -23,7 +23,6 @@ peerConnection.addEventListener("icecandidate", ({candidate}) => {
     });
 })
 
-// TODO: Find a way to avoid using ts-ignore in those event listeners
 ws.addEventListener("ice", (event) => {
     peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
 });
