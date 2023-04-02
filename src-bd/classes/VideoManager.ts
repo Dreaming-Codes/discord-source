@@ -81,6 +81,8 @@ export class VideoManager {
 
         const stream = new WebRTCStream(video.captureStream());
 
+        this.streams.set(event.detail.streamId, stream);
+
         stream.peerConnection.addEventListener("icecandidate", ({candidate}) => {
             if (!candidate) {
                 return;
