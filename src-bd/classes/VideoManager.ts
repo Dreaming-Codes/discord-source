@@ -103,7 +103,11 @@ export class VideoManager {
 
     private onAnswerEvent(event: CustomEvent<AnswerOfferEvent>) {
         const stream = this.streams.get(event.detail.streamId);
-        if (!stream) return;
+        if (!stream) {
+            Utils.error("Received answer for unknown stream");
+            return;
+        }
+        Utils.log("Received answer");
         stream.peerConnection.setRemoteDescription({
             type: "answer",
             sdp: event.detail.sdp
@@ -119,7 +123,11 @@ export class VideoManager {
 
     private onIceCandidateEvent(event: CustomEvent<ICEEvent>) {
         const stream = this.streams.get(event.detail.streamId);
-        if (!stream) return;
+        if (!stream) {
+            Utils.error("Received ICE candidate for unknown stream");
+            return;
+        }
+        Utils.log("Received ICE candidate");
         stream.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
     }
 

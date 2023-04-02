@@ -59,6 +59,10 @@ export class Utils {
         console.warn(...Utils.logString(...msg));
     }
 
+    static error(...msg: any[]) {
+        console.error(...Utils.logString(...msg));
+    }
+
     private static logString(...msg: any[]) {
         return [`%c[${DiscordSourcePlugin.name}]`, 'color: #bada55', ...msg];
     }

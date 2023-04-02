@@ -8,7 +8,10 @@ export class WebRTCStream {
     }
 
     public async start(){
-        const offer = await this.peerConnection.createOffer();
+        const offer = await this.peerConnection.createOffer({
+            offerToReceiveVideo: false,
+            offerToReceiveAudio: false
+        });
         await this.peerConnection.setLocalDescription(offer);
         return offer;
     }
