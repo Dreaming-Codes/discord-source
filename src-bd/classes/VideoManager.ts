@@ -108,7 +108,7 @@ export class VideoManager {
     private onAnswerEvent(event: CustomEvent<AnswerOfferEvent>) {
         const stream = this.streams.get(event.detail.streamId);
         if (!stream) {
-            Utils.error("Received answer for unknown stream", event.detail.streamId, "while we have", this.videos.keys());
+            Utils.error("Received answer for unknown stream", event.detail.streamId, "while we have", this.streams.keys());
             return;
         }
         Utils.log("Received answer");
@@ -128,7 +128,7 @@ export class VideoManager {
     private onIceCandidateEvent(event: CustomEvent<ICEEvent>) {
         const stream = this.streams.get(event.detail.streamId);
         if (!stream) {
-            Utils.error("Received ICE Candidate for unknown stream", event.detail.streamId, "while we have", this.videos.keys());
+            Utils.error("Received ICE Candidate for unknown stream", event.detail.streamId, "while we have", this.streams.keys());
             return;
         }
         Utils.log("Received ICE candidate");
