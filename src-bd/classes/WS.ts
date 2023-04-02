@@ -1,13 +1,15 @@
-import {TypedEventTarget} from "../../shared/TypedEventTarget";
+import { TypedEventTarget } from 'typescript-event-target';
 import { MessageType } from "../../src-tauri/bindings/MessageType";
+import {Utils} from "./Utils";
+import {MessageEventMap} from "../../shared/MappedMessageType";
 
-export class WS extends TypedEventTarget<MessageType> {
+export class WS extends TypedEventTarget<MessageEventMap> {
     private ws: WebSocket;
 
     constructor(private port: number) {
         super();
         this.ws = new WebSocket(`ws://localhost:${port}/discord`);
-        this.ws.addEventListener("message", this.eventHandler);
+        this.ws.addEventListener("message", (e) => this.eventHandler(e));
     }
 
     /**
@@ -38,7 +40,9 @@ export class WS extends TypedEventTarget<MessageType> {
         this.ws.send(JSON.stringify(event));
     }
 
-    private eventHandler(event: MessageEvent<MessageType>) {
-        this.dispatch(event.data);
+    private eventHandler(event: MessageEvent<string>) {
+        Utils.log(`Received event from the desktop app`, event.data)
+        let data: MessageType = JSON.parse(event.data);
+        this.dispatchTypedEvent(data.type, new CustomEvent(data.type, {detail: data.detail}) as any);
     }
 }

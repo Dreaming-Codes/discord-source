@@ -1,8 +1,4 @@
-import {ICEEvent} from "../bindings/ICEEvent";
-import {AnswerOfferEvent} from "../bindings/AnswerOfferEvent";
-
 import {WS} from "./WS";
-
 
 const video = document.getElementById('video') as HTMLVideoElement;
 
@@ -22,34 +18,27 @@ peerConnection.addEventListener("icecandidate", ({candidate}) => {
 
     ws.sendEvent({
         type: "ice",
-        data: {
+        detail: {
             candidate: String(candidate)
         }
     });
 })
 
 // TODO: Find a way to avoid using ts-ignore in those event listeners
-// @ts-ignore
-ws.addEventListener("ice", (event: Event & { data: ICEEvent }) => {
-    peerConnection.addIceCandidate(new RTCIceCandidate(event.data.candidate as RTCIceCandidateInit));
+ws.addEventListener("ice", (event) => {
+    peerConnection.addIceCandidate(new RTCIceCandidate(event.detail.candidate as RTCIceCandidateInit));
 });
 
-// @ts-ignore
-ws.addEventListener("offer", async (event: Event & { data: AnswerOfferEvent }) => {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(event.data.sdp as unknown as RTCSessionDescriptionInit));
+ws.addEventListener("offer", async (event) => {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(event.detail.sdp as unknown as RTCSessionDescriptionInit));
 
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
 
     ws.sendEvent({
         type: "answer",
-        data: {
+        detail: {
             sdp: String(answer)
         }
     })
-});
-
-// @ts-ignore
-ws.addEventListener("answer", async (event: Event & { data: AnswerOfferEvent }) => {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(event.data.sdp as unknown as RTCSessionDescriptionInit));
 });

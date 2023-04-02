@@ -7,8 +7,10 @@ export class WebRTCStream {
         this.peerConnection.addTrack(stream.getVideoTracks()[0]);
     }
 
-    public start(){
-
+    public async start(){
+        const offer = await this.peerConnection.createOffer();
+        await this.peerConnection.setLocalDescription(offer);
+        return offer;
     }
 
     public close() {

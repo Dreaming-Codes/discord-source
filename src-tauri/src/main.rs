@@ -7,15 +7,18 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures_util::future::join_all;
+use futures_util::lock::Mutex;
 use futures_util::SinkExt;
-use parking_lot::Mutex;
+use parking_lot::Mutex as PLMutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::RwLock;
+use tokio_tungstenite::tungstenite::Message;
 use tracing::{error, info};
 
 use crate::bd::BdSettings;
 use crate::web::WebServer;
-use crate::ws::{DiscordStreams, WebConnections, WebSocketServer};
+use crate::ws::{DiscordConnection, DiscordStreams, WebConnections, WebSocketServer};
+use crate::ws::message::{CaptureEvent, MessageType};
 
 mod ws;
 mod web;
@@ -54,8 +57,8 @@ impl Config {
 }
 
 struct State {
-    config: Mutex<Config>,
-    bd_settings: Mutex<Option<BdSettings>>,
+    config: PLMutex<Config>,
+    bd_settings: PLMutex<Option<BdSettings>>,
 }
 
 #[derive(serde::Deserialize)]
@@ -82,7 +85,7 @@ async fn main() {
 
     tracing_subscriber::fmt::init();
 
-    let config = Mutex::new(Config::load());
+    let config = PLMutex::new(Config::load());
 
     tauri::async_runtime::set(tokio::runtime::Handle::current());
 
@@ -96,10 +99,11 @@ async fn main() {
     tauri::Builder::default()
         .manage(State {
             config,
-            bd_settings: Mutex::new(None),
+            bd_settings: PLMutex::new(None),
         })
         .manage::<WebConnections>(Arc::new(RwLock::new(HashMap::new())))
         .manage::<DiscordStreams>(Arc::new(RwLock::new(Vec::new())))
+        .manage::<DiscordConnection>(Arc::new(RwLock::new(None)))
         .system_tray(SystemTray::new().with_menu(tray_menu))
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => {
@@ -129,11 +133,13 @@ async fn main() {
         .setup(|app| {
             let discord_streams: tauri::State<'_, DiscordStreams> = app.state();
             let web_connections: tauri::State<'_, WebConnections> = app.state();
+            let discord_connection: tauri::State<'_, DiscordConnection> = app.state();
 
             let discord_streams = Arc::clone(&discord_streams);
             let web_connections = Arc::clone(&web_connections);
+            let discord_connection = Arc::clone(&discord_connection);
 
-            let mut ws_server = WebSocketServer::new(discord_streams, web_connections.clone());
+            let mut ws_server = WebSocketServer::new(discord_streams, web_connections.clone(), discord_connection.clone());
             let mut web_server = WebServer::new();
 
             let cfg: tauri::State<'_, State> = app.state();
@@ -144,9 +150,18 @@ async fn main() {
                     let data: LinkEvent = serde_json::from_str(event.payload().unwrap()).unwrap();
                     info!("Link stream event: {:?}", event.payload());
                     let web_connections = web_connections.clone();
+                    let discord_connection = discord_connection.clone();
                     tauri::async_runtime::spawn(async move {
                         //TODO: Actually do the webrtc handshake
-                        let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().await.insert(data.source.unwrap());
+                        let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().insert(data.source.unwrap());
+                        let discord_connection = discord_connection.read().await;
+                        let discord_connection = discord_connection.as_ref().unwrap();
+                        let _ = discord_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
+                            &MessageType::Capture(CaptureEvent {
+                                stream_id: data.source.unwrap(),
+                            })
+                        ).unwrap())).await;
+                        info!("Sent capture event");
                     });
                 }
             });
@@ -213,7 +228,7 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
             let id = id.clone();
             let linked_stream = conn.linked_stream.clone();
             tokio::spawn(async move {
-                (id, *linked_stream.read().await)
+                (id, *linked_stream.read())
             })
         })
         .collect::<Vec<_>>();

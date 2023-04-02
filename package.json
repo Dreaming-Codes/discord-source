@@ -40,6 +40,7 @@
     "sass": "^1.59.3",
     "touch": "^3.1.0",
     "typescript": "^4.9.5",
+    "typescript-event-target": "^1.0.4",
     "vite": "^4.2.1",
     "vite-plugin-singlefile": "^0.13.3",
     "vite-plugin-vuetify": "^1.0.2",

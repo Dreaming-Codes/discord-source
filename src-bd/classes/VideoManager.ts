@@ -2,6 +2,7 @@ import {Utils} from "./Utils";
 import {WS} from "./WS";
 import {WebRTCStream} from "./WebRTCStream";
 import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
+import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
 import {SharedUtils} from "../../shared/SharedUtils";
 
 export class VideoManager {
@@ -11,11 +12,9 @@ export class VideoManager {
 
     constructor(ws: WS) {
         this.ws = ws;
-        // TODO: Find a way to avoid using ts-ignore in those event listeners
-        // @ts-ignore
-        this.ws.addEventListener("capture", this.onRequestCaptureVideoStream);
-        // @ts-ignore
-        this.ws.addEventListener("endCapture", this.onEndCaptureVideoStream);
+        this.ws.addEventListener("capture", (e) => this.onRequestCaptureVideoStream(e));
+        this.ws.addEventListener("endCapture", (e) => this.onEndCaptureVideoStream(e));
+        this.ws.addEventListener("answer", (e) => this.onAnswerEvent(e));
     }
 
 
@@ -34,7 +33,7 @@ export class VideoManager {
                 if (video.dataset.userId === event.userId && !document.body.contains(video)) {
                     this.ws.sendEvent({
                         type: "remove",
-                        data: {
+                        detail: {
                             streamId: videoId
                         }
                     })
@@ -57,7 +56,7 @@ export class VideoManager {
         this.videos.set(streamId, video);
         this.ws.sendEvent({
             type: "add",
-            data: {
+            detail: {
                 streamId: streamId,
                 userId: event.userId
             }
@@ -69,8 +68,9 @@ export class VideoManager {
         this.streams.forEach(stream => stream.close());
     }
 
-    private onRequestCaptureVideoStream(event: Event & { data: CaptureEvent }) {
-        const video = this.videos.get(event.data.streamId);
+    private async onRequestCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
+        Utils.log(`Received capture request for stream ${event.detail.streamId}!`)
+        const video = this.videos.get(event.detail.streamId);
         if (!video) return;
 
         const stream = new WebRTCStream(video.captureStream());
@@ -81,21 +81,35 @@ export class VideoManager {
             }
             this.ws.sendEvent({
                 type: "ice",
-                data: {
-                    streamId: event.data.streamId,
+                detail: {
+                    streamId: event.detail.streamId,
                     candidate: String(candidate)
                 }
             })
-        })
+        });
 
-        stream.start();
+        const offer = await stream.start();
+
+        this.ws.sendEvent({
+            type: "offer",
+            detail: {
+                sdp: offer.sdp,
+                streamId: event.detail.streamId
+            }
+        })
     }
 
-    private onEndCaptureVideoStream(event: Event & { data: CaptureEvent }) {
-        const stream = this.streams.get(event.data.streamId);
+    private onAnswerEvent(event: CustomEvent<AnswerOfferEvent>) {
+        const stream = this.streams.get(event.detail.streamId);
+        if (!stream) return;
+        stream.peerConnection.setRemoteDescription(new RTCSessionDescription(event.detail.sdp as unknown as RTCSessionDescriptionInit));
+    }
+
+    private onEndCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
+        const stream = this.streams.get(event.detail.streamId);
         if (!stream) return;
         stream.close();
-        this.streams.delete(event.data.streamId);
+        this.streams.delete(event.detail.streamId);
     }
 
 }

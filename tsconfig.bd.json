@@ -3,6 +3,7 @@
     "composite": true,
     "target": "ESNext",
     "resolveJsonModule": true,
+    "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
     "types": [

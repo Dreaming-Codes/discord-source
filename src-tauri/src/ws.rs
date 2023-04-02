@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use futures_util::{SinkExt, StreamExt};
 use futures_util::lock::Mutex;
 use futures_util::stream::{SplitSink, SplitStream};
-use futures_util::StreamExt;
+use parking_lot::RwLock as PLRwLock;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
@@ -13,24 +14,30 @@ use tracing::{error, info, warn};
 
 use crate::ws::message::MessageType;
 
-mod message;
+pub mod message;
 
 pub struct WebConnection {
     pub ws_sink: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
     pub ws_stream: Arc<Mutex<SplitStream<WebSocketStream<TcpStream>>>>,
-    pub linked_stream: Arc<RwLock<Option<u8>>>,
+    pub linked_stream: Arc<PLRwLock<Option<u8>>>,
+}
+
+pub struct DiscordSplittedConnection {
+    pub ws_sink: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
+    pub ws_stream: Arc<Mutex<SplitStream<WebSocketStream<TcpStream>>>>,
 }
 
 
 pub type WebConnections = Arc<RwLock<HashMap<String, WebConnection>>>;
 pub type DiscordStreams = Arc<RwLock<Vec<u8>>>;
+pub type DiscordConnection = Arc<RwLock<Option<DiscordSplittedConnection>>>;
 
 
 pub struct WebSocketServer<R: tauri::Runtime> {
     listener: Option<TcpListener>,
     web_connections: WebConnections,
     discord_streams: DiscordStreams,
-    discord_connection: Arc<Mutex<Option<WebSocketStream<TcpStream>>>>,
+    discord_connection: DiscordConnection,
     window: Option<tauri::Window<R>>,
 }
 
@@ -41,10 +48,10 @@ enum Status {
 }
 
 impl<R: tauri::Runtime> WebSocketServer<R> {
-    pub fn new(discord_streams: DiscordStreams, web_connections: WebConnections) -> Self {
+    pub fn new(discord_streams: DiscordStreams, web_connections: WebConnections, discord_connection: DiscordConnection) -> Self {
         Self {
             listener: None,
-            discord_connection: Arc::new(Mutex::new(None)),
+            discord_connection,
             discord_streams,
             web_connections,
             window: None,
@@ -87,18 +94,23 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
             if uri == "/discord" {
                 let discord_connection = self.discord_connection.clone();
                 {
-                    let mut discord_connection = discord_connection.lock().await;
+                    let mut discord_connection = discord_connection.write().await;
                     if discord_connection.is_some() {
-                        discord_connection.as_mut().unwrap().close(None).await.unwrap();
+                        discord_connection.as_mut().unwrap().ws_sink.lock().await.close().await.unwrap();
                     }
-                    *discord_connection = Some(ws_stream);
+                    let ws_stream_split = ws_stream.split();
+                    *discord_connection = Some(DiscordSplittedConnection {
+                        ws_sink: Arc::new(Mutex::new(ws_stream_split.0)),
+                        ws_stream: Arc::new(Mutex::new(ws_stream_split.1)),
+                    });
                 }
                 let window = self.window.clone().unwrap();
                 let discord_streams = self.discord_streams.clone();
+                let web_connections = self.web_connections.clone();
                 tauri::async_runtime::spawn(async move {
                     loop {
-                        let mut discord_connection = discord_connection.lock().await;
-                        let msg = discord_connection.as_mut().unwrap().next().await;
+                        let discord_connection = discord_connection.clone();
+                        let msg = discord_connection.read().await.as_ref().unwrap().ws_stream.lock().await.next().await;
                         let status = handle_message(msg.unwrap().unwrap());
                         match status {
                             Status::Ok(event) => {
@@ -114,8 +126,17 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                         discord_streams.write().await.retain(|id| *id != stream.stream_id);
                                     }
                                     MessageType::ICE(_) => {}
-                                    MessageType::Answer(_) => {}
-                                    MessageType::Offer(_) => {}
+                                    MessageType::Offer(offer) => {
+                                        info!("Offer: {:?}", offer);
+
+                                        let web_connections = web_connections.read().await;
+
+                                        let connection = web_connections.values().find(|connection| {
+                                            connection.linked_stream.read().is_some() && connection.linked_stream.read().unwrap() == offer.stream_id.expect("Offer stream id is none on offer from discord")
+                                        }).expect("No web connection found for offer from discord");
+
+                                        connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(&offer).unwrap())).await.unwrap();
+                                    }
                                     _ => {
                                         error!("Invalid signal from discord: {:?}", event);
                                     }
@@ -126,7 +147,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                             }
                             Status::Closed => {
                                 info!("Discord connection closed");
-                                discord_connection.take();
+                                discord_connection.write().await.take();
                                 break;
                             }
                         }
@@ -151,12 +172,13 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 self.web_connections.write().await.insert(id.to_string(), WebConnection {
                     ws_sink: Arc::new(Mutex::new(ws_sink)),
                     ws_stream: Arc::new(Mutex::new(ws_stream)),
-                    linked_stream: Arc::new(RwLock::new(None)),
+                    linked_stream: Arc::new(PLRwLock::new(None)),
                 });
                 let connection = self.web_connections.read().await.get(id).unwrap().ws_stream.clone();
                 let window = self.window.clone().unwrap();
                 window.emit("web-added", id).unwrap();
                 let web_connections = self.web_connections.clone();
+                let discord_connection = self.discord_connection.clone();
                 tauri::async_runtime::spawn({
                     let id = id.to_string();
                     async move {
@@ -170,9 +192,15 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                             match status {
                                 Status::Ok(event) => {
                                     match event {
-                                        MessageType::ICE(_) => {}
-                                        MessageType::Answer(_) => {}
-                                        MessageType::Offer(_) => {}
+                                        MessageType::Answer(mut answer) => {
+                                            info!("Answer: {:?}", answer);
+
+                                            let target_stream_id = web_connections.read().await.get(&id).unwrap().linked_stream.read().unwrap();
+
+                                            let _ = answer.stream_id.insert(target_stream_id);
+
+                                            discord_connection.read().await.as_ref().unwrap().ws_sink.lock().await.send(Message::Text(serde_json::to_string(&answer).unwrap())).await.unwrap();
+                                        }
                                         _ => {
                                             error!("Invalid signal from web: {:?}", event);
                                         }

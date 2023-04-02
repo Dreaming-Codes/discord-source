@@ -1,14 +1,18 @@
 import { MessageType } from "../bindings/MessageType";
-import {TypedEventTarget} from "../../shared/TypedEventTarget";
+import { TypedEventTarget } from 'typescript-event-target';
+import {MessageEventMap} from "../../shared/MappedMessageType";
 
-export class WS extends TypedEventTarget<MessageType> {
+
+
+export class WS extends TypedEventTarget<MessageEventMap> {
     private ws: WebSocket;
 
     constructor(url: string) {
         super();
         this.ws = new WebSocket(url);
         this.ws.addEventListener("message", (event)=>{
-            this.dispatch(event.data);
+            let data: MessageType = JSON.parse(event.data);
+            this.dispatchTypedEvent(data.type, new CustomEvent(data.type, {detail: data.detail}) as any);
         });
 
         this.ws.addEventListener("close", ()=>{

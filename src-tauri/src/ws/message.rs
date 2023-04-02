@@ -2,7 +2,7 @@ use ts_rs::TS;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
 #[ts(export)]
-#[serde(tag = "type", content = "data")]
+#[serde(tag = "type", content = "detail")]
 pub enum MessageType {
     #[serde(rename = "add")]
     Add(AddStreamEvent),
