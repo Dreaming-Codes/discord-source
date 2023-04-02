@@ -71,9 +71,13 @@ export class VideoManager {
     }
 
     private async onRequestCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
-        Utils.log(`Received capture request for stream ${event.detail.streamId}!`)
         const video = this.videos.get(event.detail.streamId);
-        if (!video) return;
+        if (!video) {
+            Utils.error("Received capture request for unknown stream");
+            return
+        }
+
+        Utils.log(`Received capture request for stream ${event.detail.streamId}!`)
 
         const stream = new WebRTCStream(video.captureStream());
 
