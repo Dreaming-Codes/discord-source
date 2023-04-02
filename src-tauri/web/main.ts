@@ -17,28 +17,29 @@ peerConnection.addEventListener("icecandidate", ({candidate}) => {
     }
 
     ws.sendEvent({
-        type: "ice",
-        detail: {
-            candidate: String(candidate)
+        type: "ice", detail: {
+            candidate: JSON.stringify(candidate.toJSON())
         }
     });
 })
 
 // TODO: Find a way to avoid using ts-ignore in those event listeners
 ws.addEventListener("ice", (event) => {
-    peerConnection.addIceCandidate(new RTCIceCandidate(event.detail.candidate as RTCIceCandidateInit));
+    peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
 });
 
 ws.addEventListener("offer", async (event) => {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(event.detail.sdp as unknown as RTCSessionDescriptionInit));
+    await peerConnection.setRemoteDescription({
+        type: "offer",
+        sdp: event.detail.sdp
+    });
 
     const answer = await peerConnection.createAnswer();
     await peerConnection.setLocalDescription(answer);
 
     ws.sendEvent({
-        type: "answer",
-        detail: {
-            sdp: String(answer)
+        type: "answer", detail: {
+            sdp: answer.sdp
         }
     })
 });

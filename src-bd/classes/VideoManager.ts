@@ -2,6 +2,7 @@ import {Utils} from "./Utils";
 import {WS} from "./WS";
 import {WebRTCStream} from "./WebRTCStream";
 import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
+import {ICEEvent} from "../../src-tauri/bindings/ICEEvent";
 import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
 import {SharedUtils} from "../../shared/SharedUtils";
 
@@ -15,6 +16,7 @@ export class VideoManager {
         this.ws.addEventListener("capture", (e) => this.onRequestCaptureVideoStream(e));
         this.ws.addEventListener("endCapture", (e) => this.onEndCaptureVideoStream(e));
         this.ws.addEventListener("answer", (e) => this.onAnswerEvent(e));
+        this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
     }
 
 
@@ -83,7 +85,7 @@ export class VideoManager {
                 type: "ice",
                 detail: {
                     streamId: event.detail.streamId,
-                    candidate: String(candidate)
+                    candidate: JSON.stringify(candidate.toJSON())
                 }
             })
         });
@@ -102,7 +104,10 @@ export class VideoManager {
     private onAnswerEvent(event: CustomEvent<AnswerOfferEvent>) {
         const stream = this.streams.get(event.detail.streamId);
         if (!stream) return;
-        stream.peerConnection.setRemoteDescription(new RTCSessionDescription(event.detail.sdp as unknown as RTCSessionDescriptionInit));
+        stream.peerConnection.setRemoteDescription({
+            type: "answer",
+            sdp: event.detail.sdp
+        });
     }
 
     private onEndCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
@@ -110,6 +115,12 @@ export class VideoManager {
         if (!stream) return;
         stream.close();
         this.streams.delete(event.detail.streamId);
+    }
+
+    private onIceCandidateEvent(event: CustomEvent<ICEEvent>) {
+        const stream = this.streams.get(event.detail.streamId);
+        if (!stream) return;
+        stream.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
     }
 
 }

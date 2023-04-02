@@ -125,7 +125,17 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                         window.emit("stream-removed", stream.stream_id).unwrap();
                                         discord_streams.write().await.retain(|id| *id != stream.stream_id);
                                     }
-                                    MessageType::ICE(_) => {}
+                                    MessageType::ICE(ice) => {
+                                        info!("ICE: {:?}", ice);
+
+                                        let web_connections = web_connections.read().await;
+
+                                        let connection = web_connections.values().find(|connection| {
+                                            connection.linked_stream.read().is_some() && connection.linked_stream.read().unwrap() == ice.stream_id.expect("ICE stream id is none on ice from discord")
+                                        }).expect("No web connection found for ice from discord");
+
+                                        connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::ICE(ice)).unwrap())).await.unwrap();
+                                    }
                                     MessageType::Offer(offer) => {
                                         info!("Offer: {:?}", offer);
 
@@ -199,7 +209,16 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
 
                                             let _ = answer.stream_id.insert(target_stream_id);
 
-                                            discord_connection.read().await.as_ref().unwrap().ws_sink.lock().await.send(Message::Text(serde_json::to_string(&answer).unwrap())).await.unwrap();
+                                            discord_connection.read().await.as_ref().unwrap().ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::Answer(answer)).unwrap())).await.unwrap();
+                                        }
+                                        MessageType::ICE(mut ice) => {
+                                            info!("ICE: {:?}", ice);
+
+                                            let target_stream_id = web_connections.read().await.get(&id).unwrap().linked_stream.read().unwrap();
+
+                                            let _ = ice.stream_id.insert(target_stream_id);
+
+                                            discord_connection.read().await.as_ref().unwrap().ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::ICE(ice)).unwrap())).await.unwrap();
                                         }
                                         _ => {
                                             error!("Invalid signal from web: {:?}", event);
