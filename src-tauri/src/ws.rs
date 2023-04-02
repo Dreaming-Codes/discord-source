@@ -135,7 +135,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                             connection.linked_stream.read().is_some() && connection.linked_stream.read().unwrap() == offer.stream_id.expect("Offer stream id is none on offer from discord")
                                         }).expect("No web connection found for offer from discord");
 
-                                        connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(&offer).unwrap())).await.unwrap();
+                                        connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::Offer(offer)).unwrap())).await.unwrap();
                                     }
                                     _ => {
                                         error!("Invalid signal from discord: {:?}", event);
