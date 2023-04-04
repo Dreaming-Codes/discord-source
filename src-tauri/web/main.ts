@@ -9,7 +9,7 @@ const peerConnection = new RTCPeerConnection();
 
 peerConnection.addEventListener("track", (event) => {
     console.log("Received track!");
-    video.srcObject = event.streams[0];
+    video.srcObject = new MediaStream([event.track]);
 })
 
 peerConnection.addEventListener("icecandidate", ({candidate}) => {
