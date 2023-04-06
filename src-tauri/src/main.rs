@@ -16,6 +16,7 @@ use tokio_tungstenite::tungstenite::Message;
 use tracing::{error, info};
 
 use crate::bd::BdSettings;
+use crate::license::check_license;
 use crate::web::WebServer;
 use crate::ws::{DiscordConnection, DiscordStreams, WebConnections, WebSocketServer};
 use crate::ws::message::{CaptureEvent, MessageType};
@@ -23,6 +24,7 @@ use crate::ws::message::{CaptureEvent, MessageType};
 mod ws;
 mod web;
 mod bd;
+mod license;
 
 const NAME: &str = env!("CARGO_CRATE_NAME");
 const DEFAULT_WS_PORT: u16 = 8214;
@@ -67,8 +69,13 @@ struct LinkEvent {
     target: String,
 }
 
+pub const DS_APP_ID: discord_sdk::AppId = 1093500259235274763;
+pub const DS_INVITE: &str = "https://discord.gg/MehYjUJGpA";
+
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
+
     // IMPORTANT:
     // Before using the Software,
     // please ensure
@@ -82,8 +89,6 @@ async fn main() {
     // before proceeding to use the Software.
     // Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
     check_license().await;
-
-    tracing_subscriber::fmt::init();
 
     let config = PLMutex::new(Config::load());
 
@@ -256,25 +261,4 @@ fn bind_servers<R: tauri::Runtime>(mut ws_server: WebSocketServer<R>, mut web_se
         web_server.bind(web_port, ws_port).await.expect("Failed to bind Web server");
         web_server.run().await;
     });
-}
-
-// IMPORTANT:
-// Before using the Software,
-// please ensure
-// that you have read and understood the terms and conditions of the License Agreement provided above.
-// In particular,
-// note that the license key check with my servers must be left in place
-// and functioning properly for any distribution of the Software.
-// Therefore,
-// it is essential that you call the function check_license()
-// before proceeding to use the Software.
-// Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
-async fn check_license() {
-    let hwid = hardware_id::get_id().expect("Failed to get hardware id");
-
-    let license = reqwest::get(&format!("https://discord-source-license.dreamingcodes.workers.dev/{}", hwid)).await.expect("Failed to validate hwid");
-
-    if !license.text().await.expect("Failed to get license text").eq("true") {
-        panic!("Invalid license, please contact the developer sending your hardware id: {}", hwid);
-    }
 }
