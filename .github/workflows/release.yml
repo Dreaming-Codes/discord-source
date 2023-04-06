@@ -15,6 +15,7 @@ jobs:
       - name: Download all build artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
           workflow: build.yml
           workflow_conclusion: success
           commit: ${{ github.event.workflow_run.head_sha }}
