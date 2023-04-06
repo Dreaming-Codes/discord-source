@@ -1,3 +1,4 @@
+use tokio::time::timeout;
 use tracing::{error, info};
 use crate::{DS_APP_ID, DS_INVITE};
 
@@ -24,16 +25,22 @@ pub async fn check_license() {
 
     info!("waiting for handshake with discord client...");
     user.0.changed().await.unwrap();
+    //DROPPING WHEEL SINCE WE DON'T NEED IT ANYMORE
     info!("handshake with discord client completed");
 
-    tokio::spawn(async move {
-        discord.open_guild_invite(DS_INVITE).await
-    });
 
     let user_id = match &*user.0.borrow() {
         discord_sdk::wheel::UserState::Connected(user) => user.clone().id.0,
         discord_sdk::wheel::UserState::Disconnected(err) => panic!("failed to connect to Discord: {}", err),
     };
+
+    tokio::spawn(async move {
+        //Timeout to prevent the task from hanging if the user doesn't accept the invite
+        let _ = timeout(tokio::time::Duration::from_secs(2), discord.open_guild_invite(DS_INVITE)).await;
+        info!("Opened invite");
+        discord.disconnect().await;
+        info!("Disconnected from discord sdk");
+    });
 
     let license = reqwest::get(&format!("https://discord-source-license.dreamingcodes.workers.dev/{}", user_id)).await.expect("Failed to validate user_id");
 

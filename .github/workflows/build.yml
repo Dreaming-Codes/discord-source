@@ -41,10 +41,6 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Building bd plugin (ubuntu only since it's not platform dependent)
-        if: matrix.platform == 'ubuntu-20.04'
-        run: pnpm run bundlebd:build
-
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
         env:

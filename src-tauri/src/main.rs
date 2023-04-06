@@ -14,7 +14,7 @@ use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message;
 use tracing::{error, info};
 
-use crate::bd::BdSettings;
+use crate::bd::{BdSettings, get_bd_path, restart_plugin};
 use crate::license::check_license;
 use crate::web::WebServer;
 use crate::ws::{DiscordConnection, DiscordStreams, WebConnections, WebSocketServer};
@@ -38,7 +38,7 @@ struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            bd_path: None,
+            bd_path: Some(get_bd_path().get(0).expect("Failed to get BD path").to_string()),
             web_port: DEFAULT_WEB_PORT,
         }
     }
@@ -46,6 +46,7 @@ impl Default for Config {
 
 impl Config {
     fn load() -> Self {
+        info!("Loading config file from: {}", confy::get_configuration_file_path(NAME, None).unwrap().display());
         confy::load(NAME, None).unwrap_or_else(|_| {
             error!("Failed to parse config file, creating new one");
             std::fs::remove_file(confy::get_configuration_file_path(NAME, None).unwrap()).expect("Failed to remove config file");
@@ -59,7 +60,7 @@ impl Config {
 
 struct State {
     config: PLMutex<Config>,
-    bd_settings: PLMutex<Option<BdSettings>>,
+    bd_settings: PLMutex<BdSettings>,
 }
 
 #[derive(serde::Deserialize)]
@@ -89,7 +90,11 @@ async fn main() {
     // Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
     check_license().await;
 
-    let config = PLMutex::new(Config::load());
+    let config = Config::load();
+
+    let bd_settings = PLMutex::new(BdSettings::load(format!("{}/plugins/DiscordSourcePlugin.config.json", config.bd_path.as_ref().expect("bd_path isn't defined").clone())).await.expect("Failed to load BD settings"));
+
+    let config = PLMutex::new(config);
 
     tauri::async_runtime::set(tokio::runtime::Handle::current());
 
@@ -103,7 +108,7 @@ async fn main() {
     tauri::Builder::default()
         .manage(State {
             config,
-            bd_settings: PLMutex::new(None),
+            bd_settings
         })
         .manage::<WebConnections>(Arc::new(RwLock::new(HashMap::new())))
         .manage::<DiscordStreams>(Arc::new(RwLock::new(Vec::new())))
@@ -133,7 +138,7 @@ async fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config, get_streams, get_targets])
+        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::restart_plugin, get_config, get_streams, get_targets])
         .setup(|app| {
             let discord_streams: tauri::State<'_, DiscordStreams> = app.state();
             let web_connections: tauri::State<'_, WebConnections> = app.state();
@@ -182,7 +187,13 @@ async fn main() {
 
             ws_server.set_window(app.get_window("main").unwrap());
 
-            bind_servers(ws_server, web_server, DEFAULT_WS_PORT, cfg.config.lock().web_port);
+            bind_servers(ws_server, web_server, cfg.bd_settings.lock().ws_port, cfg.config.lock().web_port);
+
+            let path = cfg.config.lock().bd_path.as_ref().expect("bd_path isn't defined").clone();
+            tauri::async_runtime::spawn(async move {
+                restart_plugin(format!("{}/plugins/DiscordSourcePlugin.plugin.js", path)).await;
+            });
+
             Ok(())
         })
         .build(tauri::generate_context!())

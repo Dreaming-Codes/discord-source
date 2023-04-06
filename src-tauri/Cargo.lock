@@ -656,6 +656,7 @@ dependencies = [
 name = "discord-source"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
  "async-stream",
  "confy",
  "directories 5.0.0",
