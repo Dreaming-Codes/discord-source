@@ -26,7 +26,9 @@ pub async fn check_license() {
     user.0.changed().await.unwrap();
     info!("handshake with discord client completed");
 
-    discord.open_guild_invite(DS_INVITE).await.expect("Failed to open guild invite");
+    tokio::spawn(async move {
+        discord.open_guild_invite(DS_INVITE).await
+    });
 
     let user_id = match &*user.0.borrow() {
         discord_sdk::wheel::UserState::Connected(user) => user.clone().id.0,
@@ -38,4 +40,6 @@ pub async fn check_license() {
     if !license.text().await.expect("Failed to get license text").eq("true") {
         panic!("Invalid license, please contact the developer sending your user_id or login with the correct discord account: {}", user_id);
     }
+
+    info!("License check completed successfully!")
 }

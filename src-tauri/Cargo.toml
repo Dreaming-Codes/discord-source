@@ -15,7 +15,7 @@ tauri-build = { version = "1.2", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.2", features = ["devtools", "shell-open", "system-tray", "updater"] }
+tauri = { version = "1.2", features = ["shell-open", "system-tray", "updater"] }
 tokio-tungstenite = "0.18.0"
 tokio = { version = "1.25.0", features = ["full"] }
 tracing = "0.1.37"
@@ -23,7 +23,7 @@ tracing-subscriber = "0.3.16"
 futures-util = "0.3.26"
 url = "2.3.1"
 http = "0.2.9"
-directories = { version = "4.0.1" }
+directories = { version = "5.0.0" }
 confy = "0.5.1"
 parking_lot = "0.12.1"
 ts-rs = "6.2"
