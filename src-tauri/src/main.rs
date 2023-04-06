@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use futures_util::future::join_all;
-use futures_util::lock::Mutex;
 use futures_util::SinkExt;
 use parking_lot::Mutex as PLMutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
@@ -54,7 +53,7 @@ impl Config {
         })
     }
     fn save(&self) {
-        confy::store(NAME, None, &(*self)).expect("Failed to save config");
+        confy::store(NAME, None, self).expect("Failed to save config");
     }
 }
 
@@ -145,7 +144,7 @@ async fn main() {
             let discord_connection = Arc::clone(&discord_connection);
 
             let mut ws_server = WebSocketServer::new(discord_streams, web_connections.clone(), discord_connection.clone());
-            let mut web_server = WebServer::new();
+            let web_server = WebServer::new();
 
             let cfg: tauri::State<'_, State> = app.state();
 
