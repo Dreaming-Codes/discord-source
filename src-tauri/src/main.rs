@@ -12,7 +12,13 @@ use parking_lot::Mutex as PLMutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message;
-use tracing::{error, info};
+use tracing::{error, info, Level};
+use tracing_log::log::LevelFilter;
+use tracing_log::LogTracer;
+use tracing_subscriber::{filter, Layer};
+use tracing_subscriber::filter::FilterExt;
+use tracing_subscriber::fmt::writer::MakeWriterExt;
+use tracing_subscriber::layer::SubscriberExt;
 
 use crate::bd::{BdSettings, get_bd_path, restart_plugin};
 use crate::license::check_license;
@@ -74,7 +80,7 @@ pub const DS_INVITE: &str = "https://discord.gg/MehYjUJGpA";
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
+    init_logging();
 
     // IMPORTANT:
     // Before using the Software,
@@ -271,4 +277,37 @@ fn bind_servers<R: tauri::Runtime>(mut ws_server: WebSocketServer<R>, mut web_se
         web_server.bind(web_port, ws_port).await.expect("Failed to bind Web server");
         web_server.run().await;
     });
+}
+
+fn init_logging(){
+    let log_dir = directories::BaseDirs::new().expect("Failed to get base dirs").config_local_dir().join(NAME);
+
+    if !log_dir.exists() {
+        std::fs::create_dir_all(&log_dir).expect("Failed to create log directory");
+    }
+
+    let file = std::fs::File::create(log_dir.join("log.txt")).unwrap();
+
+    let file_log = tracing_subscriber::fmt::layer()
+        .with_ansi(false)
+        .with_writer(file)
+        .with_filter(filter::LevelFilter::INFO);
+
+    let stdout_log = tracing_subscriber::fmt::layer()
+        .with_filter(filter::LevelFilter::INFO);
+
+    let subscriber = tracing_subscriber::registry()
+        .with(file_log)
+        .with(stdout_log);
+
+    info!("Logging initialized, logging to {} and stdout", log_dir.display());
+
+    match tracing::subscriber::set_global_default(subscriber) {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("Failed to set global logging default subscriber: {}", e);
+        }
+    }
+
+    LogTracer::init().unwrap();
 }
