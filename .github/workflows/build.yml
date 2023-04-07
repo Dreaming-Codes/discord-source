@@ -50,4 +50,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: "artifacts-${{ matrix.platform }}"
-          path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}\n./dist-bd/DiscordSourcePlugin.plugin.js"
+          path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
