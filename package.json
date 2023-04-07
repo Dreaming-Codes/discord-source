@@ -13,6 +13,7 @@
     "bundlebd:build": "bundlebd",
     "bundlebd:dev": "bundlebd --dev",
     "nv": "node --version",
+    "setVersion": "node ./scripts/setVersion.js",
     "postinstall": "mkdirp ./src-tauri/dist/web/ && nodetouch ./src-tauri/dist/web/index.html && mkdirp ./dist/"
   },
   "dependencies": {
