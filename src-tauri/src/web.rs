@@ -1,4 +1,4 @@
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 use tracing::info;
 
@@ -21,6 +21,7 @@ impl WebServer {
     pub async fn bind(&mut self, port: u16, ws_port: u16) -> Result<(), Box<dyn std::error::Error>> {
         info!("Webserver server listening on: {}", port);
         let listener_task = TcpListener::bind(format!("0.0.0.0:{}", port));
+
         let html_task = tokio::spawn(async move {
             let env_definitions = format!("<script>window.ws_port = {ws_port};</script>\n");
 
@@ -45,8 +46,16 @@ impl WebServer {
 }
 
 async fn handle_connection(mut stream: TcpStream, content: String) {
-    //let buf_reader = BufReader::new(&mut stream);
-    //let http_request = buf_reader.lines().next_line().await.unwrap().unwrap();
+    let buf_reader = BufReader::new(&mut stream);
+    let http_request = buf_reader.lines().next_line().await.unwrap().unwrap();
+
+    let path = http_request.split(' ').nth(1).unwrap();
+
+    if path == "/favicon.ico" {
+        stream.write_all("HTTP/1.1 404 Not Found".as_bytes()).await.unwrap();
+
+        return;
+    }
 
     const STATUS_LINE: &str = "HTTP/1.1 200 OK";
 
