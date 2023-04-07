@@ -13,7 +13,7 @@
     "bundlebd:build": "bundlebd",
     "bundlebd:dev": "bundlebd --dev",
     "nv": "node --version",
-    "postinstall": "mkdirp ./src-tauri/dist/web/ && nodetouch ./src-tauri/dist/web/index.html"
+    "postinstall": "mkdirp ./src-tauri/dist/web/ && nodetouch ./src-tauri/dist/web/index.html && mkdirp ./dist/"
   },
   "dependencies": {
     "@formkit/auto-animate": "1.0.0-beta.6",
