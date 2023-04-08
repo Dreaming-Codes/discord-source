@@ -6,7 +6,7 @@ const HTML: &str = include_str!("../dist/web/index.html");
 
 pub struct WebServer {
     listener: Option<TcpListener>,
-    html: Option<String>
+    html: Option<String>,
 }
 
 impl WebServer {
@@ -47,14 +47,15 @@ impl WebServer {
 
 async fn handle_connection(mut stream: TcpStream, content: String) {
     let buf_reader = BufReader::new(&mut stream);
-    let http_request = buf_reader.lines().next_line().await.unwrap().unwrap();
 
-    let path = http_request.split(' ').nth(1).unwrap();
+    if let Ok(Some(http_request)) = buf_reader.lines().next_line().await {
+        let path = http_request.split(' ').nth(1).unwrap();
 
-    if path == "/favicon.ico" {
-        stream.write_all("HTTP/1.1 404 Not Found".as_bytes()).await.unwrap();
+        if path == "/favicon.ico" {
+            stream.write_all("HTTP/1.1 404 Not Found".as_bytes()).await.unwrap();
 
-        return;
+            return;
+        }
     }
 
     const STATUS_LINE: &str = "HTTP/1.1 200 OK";
