@@ -1,6 +1,6 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm bundlebd:build && cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --watch --mode discord & pnpm vite",
+    "beforeDevCommand": "pnpm bundlebd:build && cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --watch --mode discord & pnpm vite & pnpm bundlebd:dev",
     "beforeBuildCommand": "pnpm bundlebd:build && cargo test export_bindings --manifest-path src-tauri/Cargo.toml && pnpm vite build --mode discord && pnpm vite:build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
