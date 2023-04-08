@@ -79,7 +79,7 @@ export class VideoManager {
 
         Utils.log(`Received capture request for stream ${event.detail.streamId}!`)
 
-        const stream = new WebRTCStream(video.captureStream());
+        const stream = new WebRTCStream(video.srcObject as MediaStream);
 
         this.streams.set(event.detail.streamId, stream);
 

@@ -1,3 +1,5 @@
+import {Utils} from "./Utils";
+
 export class WebRTCStream {
     private stream: MediaStream;
     peerConnection = new RTCPeerConnection()
@@ -12,6 +14,9 @@ export class WebRTCStream {
             offerToReceiveVideo: false,
             offerToReceiveAudio: false
         });
+
+        offer.sdp = Utils.addH264Support(offer.sdp);
+
         await this.peerConnection.setLocalDescription(offer);
         return offer;
     }
