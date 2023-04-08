@@ -112,6 +112,10 @@ appWindow.listen("web-removed", (event) => {
   targets.delete(event.payload as string);
 })
 
+appWindow.listen("discord-disconnected", () => {
+    sources.clear();
+})
+
 let hoveredElement: BoundedElement | null = null;
 
 onMounted(() => {

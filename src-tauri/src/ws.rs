@@ -158,6 +158,9 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                             Status::Closed => {
                                 info!("Discord connection closed");
                                 discord_connection.write().await.take();
+                                //Removing all discord streams
+                                discord_streams.write().await.clear();
+                                window.emit("discord-disconnected", ()).unwrap();
                                 break;
                             }
                         }
