@@ -31,12 +31,12 @@ interface Stream {
 const sourceElements: Ref<VImg[] | null> = ref(null);
 const targetElements: Ref<VImg[] | null> = ref(null);
 
-const sources = reactive<Map<number, Stream>>(new Map<number, Stream>());
+const sources = reactive<Map<string, Stream>>(new Map<string, Stream>());
 const targets = reactive<Map<string, Target>>(new Map<string, Target>());
 
 //Init with backend streams
 invoke("get_streams").then((remote_sources) => {
-  (remote_sources as number[]).forEach((source) => {
+  (remote_sources as string[]).forEach((source) => {
     sources.set(source, {});
   })
 })
@@ -97,11 +97,11 @@ watchArray([sources, targets], handleRedraw, {
 })
 
 appWindow.listen("stream-added", (event) => {
-  sources.set(event.payload as number, {});
+  sources.set(event.payload as string, {});
 })
 
 appWindow.listen("stream-removed", (event) => {
-  sources.delete(event.payload as number);
+  sources.delete(event.payload as string);
 })
 
 appWindow.listen("web-added", (event) => {
@@ -212,7 +212,7 @@ function startDrawing(e: DragEvent) {
 
       const targetId = hoveredElement?.element?.dataset.id as string;
 
-      const sourceId = Number(targetElement.dataset.id);
+      const sourceId = targetElement.dataset.id as string;
 
 
       //If source and target are already connected, remove the connection

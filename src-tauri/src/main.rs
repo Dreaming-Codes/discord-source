@@ -71,7 +71,7 @@ struct State {
 
 #[derive(serde::Deserialize)]
 struct LinkEvent {
-    source: Option<u8>,
+    source: Option<String>,
     target: String,
 }
 
@@ -160,6 +160,7 @@ async fn main() {
             let cfg: tauri::State<'_, State> = app.state();
 
             app.listen_global("link-stream", {
+                let discord_connection = discord_connection.clone();
                 let web_connections = web_connections.clone();
                 move |event| {
                     let data: LinkEvent = serde_json::from_str(event.payload().unwrap()).unwrap();
@@ -167,13 +168,13 @@ async fn main() {
                     let web_connections = web_connections.clone();
                     let discord_connection = discord_connection.clone();
                     tauri::async_runtime::spawn(async move {
-                        //TODO: Actually do the webrtc handshake
-                        let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().insert(data.source.unwrap());
+                        let source = data.source.unwrap();
+                        let _ = web_connections.write().await.get(&data.target).unwrap().linked_stream.write().insert(source.clone());
                         let discord_connection = discord_connection.read().await;
                         let discord_connection = discord_connection.as_ref().unwrap();
                         let _ = discord_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
                             &MessageType::Capture(CaptureEvent {
-                                stream_id: data.source.unwrap(),
+                                stream_id: source,
                             })
                         ).unwrap())).await;
                         info!("Sent capture event");
@@ -185,9 +186,21 @@ async fn main() {
                 let data: LinkEvent = serde_json::from_str(event.payload().unwrap()).unwrap();
                 info!("Unlink stream event: {:?}", event.payload());
                 let web_connections = web_connections.clone();
+                let discord_connection = discord_connection.clone();
                 tauri::async_runtime::spawn(async move {
                     //TODO: Avoid reloading the page to unlink the stream
-                    let _ = web_connections.write().await.get(&data.target).unwrap().ws_sink.lock().await.close().await;
+                    let web_connections = web_connections.write().await;
+                    let web_connection = web_connections.get(&data.target).unwrap();
+                    let _ = web_connection.ws_sink.lock().await.close().await;
+                    let stream_id = web_connection.linked_stream.read().as_ref().expect("Trying to close a not connected stream").clone();
+                    let discord_connection = discord_connection.read().await;
+                    let discord_connection = discord_connection.as_ref().unwrap();
+                    let _ =  discord_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
+                        &MessageType::EndCapture(CaptureEvent {
+                            stream_id,
+                        })
+                    ).unwrap())).await;
+                    info!("Sent end capture event");
                 });
             });
 
@@ -240,7 +253,7 @@ async fn set_web_port(state: tauri::State<'_, State>, port: u16) -> Result<(), (
 }
 
 #[tauri::command]
-async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<HashMap<String, Option<u8>>, ()> {
+async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Result<HashMap<String, Option<String>>, ()> {
     let web_connections = web_connections.read().await;
 
     let tasks = web_connections
@@ -249,7 +262,7 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
             let id = id.clone();
             let linked_stream = conn.linked_stream.clone();
             tokio::spawn(async move {
-                (id, *linked_stream.read())
+                (id, linked_stream.read().clone())
             })
         })
         .collect::<Vec<_>>();
@@ -257,12 +270,12 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
     Ok(join_all(tasks).await
         .into_iter()
         .map(|res| res.unwrap())
-        .collect::<HashMap<String, Option<u8>>>()
+        .collect::<HashMap<String, Option<String>>>()
     )
 }
 
 #[tauri::command]
-async fn get_streams(discord_streams: tauri::State<'_, DiscordStreams>) -> Result<Vec<u8>, ()> {
+async fn get_streams(discord_streams: tauri::State<'_, DiscordStreams>) -> Result<Vec<String>, ()> {
     let discord_streams = discord_streams.read().await;
     Ok(discord_streams.clone())
 }

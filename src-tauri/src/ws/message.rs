@@ -24,16 +24,16 @@ pub enum MessageType {
 #[ts(export)]
 pub struct AddStreamEvent {
     #[serde(rename = "streamId")]
-    pub stream_id: u8,
+    pub stream_id: String,
     #[serde(rename = "userId")]
-    pub user_id: String,
+    pub user_id: Option<String>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
 #[ts(export)]
 pub struct RemoveStreamEvent {
     #[serde(rename = "streamId")]
-    pub stream_id: u8
+    pub stream_id: String
 }
 
 /// stream_id is optional since it's present only if the event is from discord
@@ -42,7 +42,7 @@ pub struct RemoveStreamEvent {
 pub struct ICEEvent {
     #[serde(rename = "streamId")]
     #[ts(optional)]
-    pub stream_id: Option<u8>,
+    pub stream_id: Option<String>,
     pub candidate: String,
 }
 
@@ -52,7 +52,7 @@ pub struct ICEEvent {
 pub struct AnswerOfferEvent {
     #[serde(rename = "streamId")]
     #[ts(optional)]
-    pub stream_id: Option<u8>,
+    pub stream_id: Option<String>,
     pub sdp: String,
 }
 
@@ -60,5 +60,5 @@ pub struct AnswerOfferEvent {
 #[ts(export)]
 pub struct CaptureEvent {
     #[serde(rename = "streamId")]
-    pub stream_id: u8,
+    pub stream_id: String,
 }

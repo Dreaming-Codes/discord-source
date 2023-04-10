@@ -19,7 +19,7 @@ pub mod message;
 pub struct WebConnection {
     pub ws_sink: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
     pub ws_stream: Arc<Mutex<SplitStream<WebSocketStream<TcpStream>>>>,
-    pub linked_stream: Arc<PLRwLock<Option<u8>>>,
+    pub linked_stream: Arc<PLRwLock<Option<String>>>,
 }
 
 pub struct DiscordSplittedConnection {
@@ -29,7 +29,7 @@ pub struct DiscordSplittedConnection {
 
 
 pub type WebConnections = Arc<RwLock<HashMap<String, WebConnection>>>;
-pub type DiscordStreams = Arc<RwLock<Vec<u8>>>;
+pub type DiscordStreams = Arc<RwLock<Vec<String>>>;
 pub type DiscordConnection = Arc<RwLock<Option<DiscordSplittedConnection>>>;
 
 
@@ -117,13 +117,13 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                 match event {
                                     MessageType::Add(stream) => {
                                         info!("Added stream: {:?}", stream);
-                                        discord_streams.write().await.push(stream.stream_id);
+                                        discord_streams.write().await.push(stream.stream_id.clone());
                                         window.emit("stream-added", stream.stream_id).unwrap();
                                     }
                                     MessageType::Remove(stream) => {
                                         info!("Removed stream: {:?}", stream);
-                                        window.emit("stream-removed", stream.stream_id).unwrap();
-                                        discord_streams.write().await.retain(|id| *id != stream.stream_id);
+                                        window.emit("stream-removed", stream.stream_id.clone()).unwrap();
+                                        discord_streams.write().await.retain(|id| id != &stream.stream_id);
                                     }
                                     MessageType::ICE(ice) => {
                                         info!("ICE: {:?}", ice);
@@ -131,7 +131,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                         let web_connections = web_connections.read().await;
 
                                         let connection = web_connections.values().find(|connection| {
-                                            connection.linked_stream.read().is_some() && connection.linked_stream.read().unwrap() == ice.stream_id.expect("ICE stream id is none on ice from discord")
+                                            connection.linked_stream.read().is_some() && connection.linked_stream.read().as_ref().unwrap() == ice.stream_id.as_ref().expect("ICE stream id is none on ice from discord")
                                         }).expect("No web connection found for ice from discord");
 
                                         connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::ICE(ice)).unwrap())).await.unwrap();
@@ -142,7 +142,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                         let web_connections = web_connections.read().await;
 
                                         let connection = web_connections.values().find(|connection| {
-                                            connection.linked_stream.read().is_some() && connection.linked_stream.read().unwrap() == offer.stream_id.expect("Offer stream id is none on offer from discord")
+                                            connection.linked_stream.read().is_some() && connection.linked_stream.read().as_ref().unwrap() == offer.stream_id.as_ref().expect("Offer stream id is none on offer from discord")
                                         }).expect("No web connection found for offer from discord");
 
                                         connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::Offer(offer)).unwrap())).await.unwrap();
@@ -208,16 +208,16 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                         MessageType::Answer(mut answer) => {
                                             info!("Answer: {:?}", answer);
 
-                                            let target_stream_id = web_connections.read().await.get(&id).unwrap().linked_stream.read().unwrap();
+                                            let target_stream_id = web_connections.read().await.get(&id).unwrap().linked_stream.read().as_ref().unwrap().clone();
 
-                                            let _ = answer.stream_id.insert(target_stream_id);
+                                            let _ = answer.stream_id.insert(target_stream_id.clone());
 
                                             discord_connection.read().await.as_ref().unwrap().ws_sink.lock().await.send(Message::Text(serde_json::to_string(&MessageType::Answer(answer)).unwrap())).await.unwrap();
                                         }
                                         MessageType::ICE(mut ice) => {
                                             info!("ICE: {:?}", ice);
 
-                                            let target_stream_id = web_connections.read().await.get(&id).unwrap().linked_stream.read().unwrap();
+                                            let target_stream_id = web_connections.read().await.get(&id).unwrap().linked_stream.read().as_ref().unwrap().clone();
 
                                             let _ = ice.stream_id.insert(target_stream_id);
 

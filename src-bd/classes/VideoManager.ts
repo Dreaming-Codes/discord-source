@@ -4,12 +4,16 @@ import {WebRTCStream} from "./WebRTCStream";
 import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
 import {ICEEvent} from "../../src-tauri/bindings/ICEEvent";
 import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
-import {SharedUtils} from "../../shared/SharedUtils";
+import DiscordSourcePlugin from "../index";
+
+interface DiscordStream {
+    canvas?: HTMLCanvasElement;
+    peerConnection?: WebRTCStream;
+}
 
 export class VideoManager {
-    private videos: Map<number, HTMLVideoElement> = new Map();
     private ws: WS;
-    private streams: Map<number, WebRTCStream> = new Map();
+    private streams: Map<string, DiscordStream> = new Map();
 
     constructor(ws: WS) {
         this.ws = ws;
@@ -20,70 +24,27 @@ export class VideoManager {
     }
 
 
-    //TODO: add support for picture-in-picture
-    /**
-     * This function is called when a new RTC_CONNECTION_VIDEO event is dispatched, and it's used to save the video element for future use and send it to the desktop app
-     */
-    public async onVideoStream(event: any) {
-        //If the streamId is null, it means that the video has ended
-        if (!event.streamId) {
-            Utils.log(`Video ended for ${event.userId}`);
-            //We need to wait a bit, because the video element is removed from the DOM after the event is dispatched
-            await SharedUtils.delay(500);
-
-            for (let [videoId, video] of this.videos.entries()) {
-                if (video.dataset.userId === event.userId && !document.body.contains(video)) {
-                    this.ws.sendEvent({
-                        type: "remove",
-                        detail: {
-                            streamId: videoId
-                        }
-                    })
-                    this.videos.delete(videoId);
-                    break;
-                }
-            }
-            return;
-        }
-
-        Utils.log(`Video ${event.streamId} started from ${event.userId}, waiting for video element...`);
-        const video = await Utils.waitForElm(`[data-selenium-video-tile="${event.userId}"] canvas`) as HTMLVideoElement;
-        Utils.log(`Found video element for ${event.streamId} from ${event.userId}!`);
-
-        //Adding userId to the video element, so we can find it later when the stream ends
-        video.dataset.userId = event.userId;
-
-        let streamId = parseInt(event.streamId);
-
-        this.videos.set(streamId, video);
-        this.ws.sendEvent({
-            type: "add",
-            detail: {
-                streamId: streamId,
-                userId: event.userId
-            }
-        })
-    }
-
-    public async stop() {
-        await this.ws.close();
-        this.streams.forEach(stream => stream.close());
-    }
-
     private async onRequestCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
-        const video = this.videos.get(event.detail.streamId);
+        const video = this.streams.get(event.detail.streamId);
         if (!video) {
-            Utils.error("Received capture request for unknown stream", event.detail.streamId, "while we have", this.videos.keys());
+            Utils.error("Received capture request for unknown stream", event.detail.streamId, "while we have", this.streams.keys());
             return
         }
 
         Utils.log(`Received capture request for stream ${event.detail.streamId}!`)
 
-        const stream = new WebRTCStream(video.captureStream() as MediaStream);
+        video.canvas = document.createElement("canvas");
+        video.canvas.id = "discord-source-canvas-" + event.detail.streamId;
+        document.body.append(video.canvas);
 
-        this.streams.set(event.detail.streamId, stream);
+        DiscordSourcePlugin.VoiceEngine.addVideoOutputSink(video.canvas.id, event.detail.streamId, (width, height)=>{
+            video.canvas.width = width;
+            video.canvas.height = height;
+        });
 
-        stream.peerConnection.addEventListener("icecandidate", ({candidate}) => {
+        video.peerConnection = new WebRTCStream(video.canvas.captureStream());
+
+        video.peerConnection.peerConnection.addEventListener("icecandidate", ({candidate}) => {
             if (!candidate) {
                 return;
             }
@@ -96,7 +57,7 @@ export class VideoManager {
             })
         });
 
-        const offer = await stream.start();
+        const offer = await video.peerConnection.start();
 
         this.ws.sendEvent({
             type: "offer",
@@ -107,6 +68,35 @@ export class VideoManager {
         })
     }
 
+    public async addVideoStream(streamId: string) {
+        const existingStream = this.streams.get(streamId);
+        
+        if(existingStream){
+            this.ws.sendEvent({
+                type: "remove",
+                detail: {
+                    streamId
+                }
+            })
+            this.streams.delete(streamId);
+            return;
+        }
+        
+        this.streams.set(streamId, {});
+        this.ws.sendEvent({
+            type: "add",
+            detail: {
+                streamId: streamId,
+                userId: null
+            }
+        })
+    }
+
+    public async stop() {
+        await this.ws.close();
+        this.streams.forEach(stream => stream.peerConnection?.close());
+    }
+
     private onAnswerEvent(event: CustomEvent<AnswerOfferEvent>) {
         const stream = this.streams.get(event.detail.streamId);
         if (!stream) {
@@ -114,7 +104,7 @@ export class VideoManager {
             return;
         }
         Utils.log("Received answer");
-        stream.peerConnection.setRemoteDescription({
+        stream.peerConnection.peerConnection.setRemoteDescription({
             type: "answer",
             sdp: event.detail.sdp
         });
@@ -122,8 +112,15 @@ export class VideoManager {
 
     private onEndCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
         const stream = this.streams.get(event.detail.streamId);
-        if (!stream) return;
-        stream.close();
+        if (!stream) {
+            Utils.error("Received end capture request for unknown stream", event.detail.streamId, "while we have", this.streams.keys());
+            return;
+        }
+        Utils.log(`Received end capture request for stream ${event.detail.streamId}!`)
+        stream.peerConnection.close();
+        DiscordSourcePlugin.VoiceEngine.removeVideoOutputSink(stream.canvas.id, event.detail.streamId);
+        document.body.removeChild(stream.canvas);
+        stream.canvas.remove();
         this.streams.delete(event.detail.streamId);
     }
 
@@ -134,7 +131,7 @@ export class VideoManager {
             return;
         }
         Utils.log("Received ICE candidate");
-        stream.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
+        stream.peerConnection.peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
     }
 
 }
