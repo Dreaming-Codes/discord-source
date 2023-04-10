@@ -46,16 +46,16 @@ export default class DiscordSourcePlugin {
             let deviceid = null;
 
             if (effectFunction.toString().includes("addVideoOutputSink")) {
-                console.log("Found videoSink", originalArguments[1][0])
+                Utils.log("Found videoSink", originalArguments[1][0])
                 deviceid = originalArguments[1][0];
             }else if(effectFunction.toString().includes("addDirectVideoOutputSink")){
-                console.log("Found directVideoSink", originalArguments[1][1])
+                Utils.log("Found directVideoSink", originalArguments[1][1])
                 deviceid = originalArguments[1][1];
             }else{
                 return;
             }
 
-            DiscordSourcePlugin.videoManager.addVideoStream(deviceid);
+            DiscordSourcePlugin.videoManager.newVideoStream(deviceid);
         })
 
         Utils.log("Plugin started");

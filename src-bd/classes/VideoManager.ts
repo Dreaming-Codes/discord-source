@@ -23,6 +23,45 @@ export class VideoManager {
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
     }
 
+    public async newVideoStream(streamId: string) {
+        //Ignoring usb since it is a camera preview
+        if (streamId.startsWith("usb")) {
+            return;
+        }
+
+        const existingStream = this.streams.get(streamId);
+
+        if (existingStream) {
+            return;
+        }
+
+        let preview = null;
+        try {
+            preview = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+        } catch (e) {
+            // ignoring
+        }
+
+        Utils.log("New video stream", streamId, "preview", preview);
+
+        if (!preview) {
+            return;
+        }
+
+        this.streams.set(streamId, {});
+        this.ws.sendEvent({
+            type: "add",
+            detail: {
+                streamId: streamId,
+                userId: null
+            }
+        });
+    }
+
+    public async stop() {
+        await this.ws.close();
+        this.streams.forEach(stream => stream.peerConnection?.close());
+    }
 
     private async onRequestCaptureVideoStream(event: CustomEvent<CaptureEvent>) {
         const video = this.streams.get(event.detail.streamId);
@@ -38,7 +77,7 @@ export class VideoManager {
         video.canvas.style.display = "none";
         document.body.append(video.canvas);
 
-        DiscordSourcePlugin.VoiceEngine.addVideoOutputSink(video.canvas.id, event.detail.streamId, (width, height)=>{
+        DiscordSourcePlugin.VoiceEngine.addVideoOutputSink(video.canvas.id, event.detail.streamId, (width, height) => {
             video.canvas.width = width;
             video.canvas.height = height;
         });
@@ -67,35 +106,6 @@ export class VideoManager {
                 streamId: event.detail.streamId
             }
         })
-    }
-
-    public async addVideoStream(streamId: string) {
-        const existingStream = this.streams.get(streamId);
-        
-        if(existingStream){
-            this.ws.sendEvent({
-                type: "remove",
-                detail: {
-                    streamId
-                }
-            })
-            this.streams.delete(streamId);
-            return;
-        }
-        
-        this.streams.set(streamId, {});
-        this.ws.sendEvent({
-            type: "add",
-            detail: {
-                streamId: streamId,
-                userId: null
-            }
-        })
-    }
-
-    public async stop() {
-        await this.ws.close();
-        this.streams.forEach(stream => stream.peerConnection?.close());
     }
 
     private onAnswerEvent(event: CustomEvent<AnswerOfferEvent>) {
