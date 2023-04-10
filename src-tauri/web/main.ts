@@ -1,4 +1,5 @@
 import {WS} from "./WS";
+import {SharedUtils} from "../../shared/SharedUtils";
 
 const video = document.getElementById('video') as HTMLVideoElement;
 
@@ -37,6 +38,8 @@ ws.addEventListener("offer", async (event) => {
     });
 
     const answer = await peerConnection.createAnswer();
+    answer.sdp = SharedUtils.forceH264Support(answer.sdp);
+    answer.sdp = SharedUtils.forceVideoBandwidth(answer.sdp, 1000);
     await peerConnection.setLocalDescription(answer);
 
     ws.sendEvent({

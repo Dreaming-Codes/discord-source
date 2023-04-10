@@ -1,4 +1,4 @@
-import {Utils} from "./Utils";
+import {SharedUtils} from "../../shared/SharedUtils";
 
 export class WebRTCStream {
     private stream: MediaStream;
@@ -6,6 +6,7 @@ export class WebRTCStream {
 
     constructor(stream: MediaStream) {
         this.stream = stream;
+        
         this.peerConnection.addTrack(stream.getVideoTracks()[0]);
     }
 
@@ -15,7 +16,8 @@ export class WebRTCStream {
             offerToReceiveAudio: false
         });
 
-        offer.sdp = Utils.addH264Support(offer.sdp);
+        offer.sdp = SharedUtils.forceH264Support(offer.sdp);
+        offer.sdp = SharedUtils.forceVideoBandwidth(offer.sdp, 1000)
 
         await this.peerConnection.setLocalDescription(offer);
         return offer;
