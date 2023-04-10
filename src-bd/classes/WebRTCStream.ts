@@ -1,5 +1,3 @@
-import {SharedUtils} from "../../shared/SharedUtils";
-
 export class WebRTCStream {
     private stream: MediaStream;
     peerConnection = new RTCPeerConnection({
@@ -9,7 +7,7 @@ export class WebRTCStream {
     constructor(stream: MediaStream) {
         this.stream = stream;
         
-        const sender = this.peerConnection.addTrack(stream.getVideoTracks()[0]);
+        this.peerConnection.addTrack(stream.getVideoTracks()[0]);
     }
 
     public async start(){

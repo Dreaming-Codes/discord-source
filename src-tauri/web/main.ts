@@ -1,5 +1,4 @@
 import {WS} from "./WS";
-import {SharedUtils} from "../../shared/SharedUtils";
 
 const video = document.getElementById('video') as HTMLVideoElement;
 
