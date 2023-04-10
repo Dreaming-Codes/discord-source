@@ -47,7 +47,7 @@ export class VideoManager {
         }
 
         Utils.log(`Video ${event.streamId} started from ${event.userId}, waiting for video element...`);
-        const video = await Utils.waitForElm(`[data-selenium-video-tile="${event.userId}"] video`) as HTMLVideoElement;
+        const video = await Utils.waitForElm(`[data-selenium-video-tile="${event.userId}"] canvas`) as HTMLVideoElement;
         Utils.log(`Found video element for ${event.streamId} from ${event.userId}!`);
 
         //Adding userId to the video element, so we can find it later when the stream ends
@@ -79,7 +79,7 @@ export class VideoManager {
 
         Utils.log(`Received capture request for stream ${event.detail.streamId}!`)
 
-        const stream = new WebRTCStream(video.srcObject as MediaStream);
+        const stream = new WebRTCStream(video.captureStream() as MediaStream);
 
         this.streams.set(event.detail.streamId, stream);
 
