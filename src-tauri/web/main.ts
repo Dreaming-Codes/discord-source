@@ -38,8 +38,8 @@ ws.addEventListener("offer", async (event) => {
     });
 
     const answer = await peerConnection.createAnswer();
-    answer.sdp = SharedUtils.forceH264Support(answer.sdp);
-    answer.sdp = SharedUtils.forceVideoBandwidth(answer.sdp, 1000);
+    //answer.sdp = SharedUtils.forceH264Support(answer.sdp);
+    //answer.sdp = SharedUtils.forceVideoBandwidth(answer.sdp, 90000);
     await peerConnection.setLocalDescription(answer);
 
     ws.sendEvent({

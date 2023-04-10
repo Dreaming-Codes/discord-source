@@ -82,7 +82,7 @@ export class VideoManager {
             video.canvas.height = height;
         });
 
-        video.peerConnection = new WebRTCStream(video.canvas.captureStream());
+        video.peerConnection = new WebRTCStream(video.canvas.captureStream(30));
 
         video.peerConnection.peerConnection.addEventListener("icecandidate", ({candidate}) => {
             if (!candidate) {

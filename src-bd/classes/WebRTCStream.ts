@@ -2,12 +2,14 @@ import {SharedUtils} from "../../shared/SharedUtils";
 
 export class WebRTCStream {
     private stream: MediaStream;
-    peerConnection = new RTCPeerConnection()
+    peerConnection = new RTCPeerConnection({
+        bundlePolicy: "max-bundle"
+    })
 
     constructor(stream: MediaStream) {
         this.stream = stream;
         
-        this.peerConnection.addTrack(stream.getVideoTracks()[0]);
+        const sender = this.peerConnection.addTrack(stream.getVideoTracks()[0]);
     }
 
     public async start(){
@@ -16,8 +18,8 @@ export class WebRTCStream {
             offerToReceiveAudio: false
         });
 
-        offer.sdp = SharedUtils.forceH264Support(offer.sdp);
-        offer.sdp = SharedUtils.forceVideoBandwidth(offer.sdp, 1000)
+        //offer.sdp = SharedUtils.forceH264Support(offer.sdp);
+        //offer.sdp = SharedUtils.forceVideoBandwidth(offer.sdp, 90000)
 
         await this.peerConnection.setLocalDescription(offer);
         return offer;
