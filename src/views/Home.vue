@@ -265,7 +265,7 @@ function getColor(id: number) {
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
         <div v-auto-animate>
-          <v-img v-for="[key, source] in sources" :key="key" :data-id="key" ref="sourceElements"
+          <v-img v-for="key in sources.keys()" :key="key" :data-id="key" ref="sourceElements"
                  :src="'https://picsum.photos/1920/1080?' + key"
                  @load="imgLoad"
                  @dragstart.prevent="startDrawing"></v-img>
