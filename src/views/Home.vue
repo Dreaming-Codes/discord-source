@@ -276,10 +276,11 @@ function getColor(id: number) {
         <div v-auto-animate>
           <v-img v-for="key in [...targets.keys()].sort()" :key="key" :data-id="key" ref="targetElements"
                  :src="'https://picsum.photos/1920/1080?' + key"
+                 :alt="key"
                  @load="imgLoad"
                  @mouseout="mouseOut"
                  @mouseover="mouseOver"
-                 @dragstart.prevent></v-img>
+                 @dragstart.prevent>{{key}}</v-img>
         </div>
       </v-col>
     </v-row>
