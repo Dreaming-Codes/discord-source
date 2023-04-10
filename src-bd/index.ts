@@ -5,7 +5,8 @@ import {VideoManager} from "./classes/VideoManager";
 
 export default class DiscordSourcePlugin {
     static videoManager: VideoManager;
-    private Dispatcher = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("dispatch", "register"));
+    private static Dispatcher = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("dispatch", "register"));
+    public static VoiceEngine = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVoiceEngine")).getVoiceEngine() as VoiceEngine;
 
     async start() {
         if (!Settings.getPort()) {
@@ -40,7 +41,7 @@ export default class DiscordSourcePlugin {
 
         DiscordSourcePlugin.videoManager = new VideoManager(ws);
 
-        this.Dispatcher.subscribe("RTC_CONNECTION_VIDEO", this.onVideoStream);
+        DiscordSourcePlugin.Dispatcher.subscribe("RTC_CONNECTION_VIDEO", this.onVideoStream);
         Utils.log("Plugin started");
     }
 
@@ -49,7 +50,7 @@ export default class DiscordSourcePlugin {
     }
 
     stop() {
-        this.Dispatcher.unsubscribe("RTC_CONNECTION_VIDEO", this.onVideoStream);
+        DiscordSourcePlugin.Dispatcher.unsubscribe("RTC_CONNECTION_VIDEO", this.onVideoStream);
         DiscordSourcePlugin.videoManager.stop();
         Utils.log("Plugin stopped");
     }
