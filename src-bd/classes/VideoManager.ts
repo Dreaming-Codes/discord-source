@@ -119,10 +119,11 @@ export class VideoManager {
         }
         Utils.log(`Received end capture request for stream ${event.detail.streamId}!`)
         stream.peerConnection.close();
+        stream.peerConnection = undefined;
         DiscordSourcePlugin.VoiceEngine.removeVideoOutputSink(stream.canvas.id, event.detail.streamId);
         document.body.removeChild(stream.canvas);
         stream.canvas.remove();
-        this.streams.delete(event.detail.streamId);
+        stream.canvas = undefined;
     }
 
     private onIceCandidateEvent(event: CustomEvent<ICEEvent>) {
