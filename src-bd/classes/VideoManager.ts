@@ -96,7 +96,7 @@ export class VideoManager {
 
         video.canvas = document.createElement("canvas");
         video.canvas.id = "discord-source-canvas-" + event.detail.streamId;
-        video.canvas.style.display = "none";
+        //video.canvas.style.display = "none";
         document.body.append(video.canvas);
 
         DiscordSourcePlugin.VoiceEngine.addVideoOutputSink(video.canvas.id, event.detail.streamId, (width, height) => {
