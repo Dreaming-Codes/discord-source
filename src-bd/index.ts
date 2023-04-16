@@ -6,7 +6,7 @@ import {VideoManager} from "./classes/VideoManager";
 export default class DiscordSourcePlugin {
     static videoManager: VideoManager;
     public static VoiceEngine = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVoiceEngine")).getVoiceEngine() as VoiceEngine;
-    private static ReactModule = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("useEffect"));
+    public static VideoHandler = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byPrototypeFields("_handleVideoStreamId")).prototype;
 
     async start() {
         if (!Settings.getPort()) {
@@ -41,22 +41,13 @@ export default class DiscordSourcePlugin {
 
         DiscordSourcePlugin.videoManager = new VideoManager(ws);
 
-        BdApi.Patcher.after(DiscordSourcePlugin.name, DiscordSourcePlugin.ReactModule, "useEffect", (_, originalArguments) => {
-            const effectFunction = originalArguments[0];
-            let deviceid = null;
-
-            if (effectFunction.toString().includes("addVideoOutputSink")) {
-                Utils.log("Found videoSink", originalArguments[1][0])
-                deviceid = originalArguments[1][0];
-            }else if(effectFunction.toString().includes("addDirectVideoOutputSink")){
-                Utils.log("Found directVideoSink", originalArguments[1][1])
-                deviceid = originalArguments[1][1];
+        BdApi.Patcher.after(DiscordSourcePlugin.name, DiscordSourcePlugin.VideoHandler, "_handleVideoStreamId", (_, [streamData]: [StreamData]) => {
+            if(streamData.streamId) {
+                DiscordSourcePlugin.videoManager.newVideoStream(streamData.streamId, streamData.userId);
             }else{
-                return;
+                DiscordSourcePlugin.videoManager.removeVideoStream(streamData.userId);
             }
-
-            DiscordSourcePlugin.videoManager.newVideoStream(deviceid);
-        })
+        });
 
         Utils.log("Plugin started");
     }

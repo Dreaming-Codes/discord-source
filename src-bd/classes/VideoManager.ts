@@ -9,6 +9,7 @@ import DiscordSourcePlugin from "../index";
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
     peerConnection?: WebRTCStream;
+    userId: string;
 }
 
 export class VideoManager {
@@ -23,12 +24,7 @@ export class VideoManager {
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
     }
 
-    public async newVideoStream(streamId: string) {
-        //Ignoring usb since it is a camera preview
-        if (streamId.startsWith("usb")) {
-            return;
-        }
-
+    public async newVideoStream(streamId: string, userId: string) {
         const existingStream = this.streams.get(streamId);
 
         if (existingStream) {
@@ -48,14 +44,40 @@ export class VideoManager {
             return;
         }
 
-        this.streams.set(streamId, {});
+        this.streams.set(streamId, {
+            userId,
+        });
+
         this.ws.sendEvent({
             type: "add",
             detail: {
-                streamId: streamId,
-                userId: null
+                streamId,
+                userId
             }
         });
+    }
+
+    public async removeVideoStream(userId: string) {
+        //Finding stream id
+        let streamId = null;
+
+        for (const [key, value] of this.streams.entries()) {
+            if (value.userId === userId) {
+                streamId = key;
+                break;
+            }
+        }
+
+        if (!streamId) {
+            return;
+        }
+
+        this.ws.sendEvent({
+            type: "remove",
+            detail: {
+                streamId
+            }
+        })
     }
 
     public async stop() {
