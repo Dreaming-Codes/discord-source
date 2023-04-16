@@ -112,6 +112,8 @@ async fn main() {
 
     #[allow(clippy::single_match)]
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+        }))
         .manage(State {
             config,
             bd_settings
