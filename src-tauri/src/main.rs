@@ -84,6 +84,7 @@ pub const DS_INVITE: &str = "https://discord.gg/MehYjUJGpA";
 async fn main() {
     init_logging();
 
+    info!("Checking license...");
     // IMPORTANT:
     // Before using the Software,
     // please ensure
@@ -97,8 +98,11 @@ async fn main() {
     // before proceeding to use the Software.
     // Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
     check_license().await;
+    info!("License check complete");
 
+    info!("Configuring Open ASAR...");
     configure_open_asar().await;
+    info!("Configured Open ASAR");
 
     let config = Config::load();
 
