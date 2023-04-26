@@ -2,7 +2,9 @@
 
 use std::collections::HashMap;
 use std::path::Path;
-use psutil::*;
+use lazy_static::lazy_static;
+
+use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
 use tauri::async_runtime::set;
 use tokio::fs;
 use tokio::fs::File;
@@ -88,8 +90,11 @@ const DISCORD_SETTINGS_PATH: [&str; 3] = [
     "~/.config/discordcanary/settings.json",
 ];
 
-
 const DISCORD_OPEN_ASAR_URL: &str = "https://github.com/GooseMod/OpenAsar/releases/download/nightly/app.asar";
+
+lazy_static!(
+    static ref SYS: System = System::new_all();
+);
 
 fn is_discord(cmdline: &str) -> bool {
     DISCORD_EXE_NAMES.iter().any(|exe_name| !cmdline.to_lowercase().contains("discord-source") && cmdline.to_lowercase().contains(exe_name))
@@ -97,13 +102,15 @@ fn is_discord(cmdline: &str) -> bool {
 
 fn kill_discord() {
     info!("Killing Discord");
-    let processes = process::processes().expect("Error getting processes");
 
-    for process in processes.into_iter().flatten() {
-        if let Ok(Some(cmdline)) = process.cmdline() {
-            if is_discord(cmdline.as_str()) {
-                process.kill().expect("Error killing process");
-            }
+    let processes = SYS.processes();
+
+    for process in processes.iter() {
+        let Some(cmd) = process.1.cmd().get(0) else {
+            continue;
+        };
+        if is_discord(cmd) {
+            process.1.kill();
         }
     }
 }
@@ -138,7 +145,7 @@ async fn install_open_asar() {
             };
             let second_part = inner_paths[1];
 
-            let path = format!("{}/{}",first_part, second_part);
+            let path = format!("{}/{}", first_part, second_part);
 
             if Path::new(&path).exists() {
                 asar_paths.push(path);
@@ -161,7 +168,7 @@ struct Openasar {
     #[serde(rename = "customFlags")]
     pub custom_flags: Option<String>,
     #[serde(flatten)]
-    other: serde_json::Value
+    other: serde_json::Value,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -170,7 +177,7 @@ struct DiscordSettings {
     pub dangerous_enable_devtools_only_enable_if_you_know_what_youre_doing: Option<bool>,
     pub openasar: Option<Openasar>,
     #[serde(flatten)]
-    other: serde_json::Value
+    other: serde_json::Value,
 }
 
 pub async fn configure_open_asar() {
