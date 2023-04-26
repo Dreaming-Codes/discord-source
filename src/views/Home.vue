@@ -157,7 +157,7 @@ async function handleRedraw() {
     const targetRect = connection.target.element?.getBoundingClientRect()!;
     connection.target.connectionPoint = {
       x: targetRect.left,
-      y: targetRect.top + targetRect.height / 2,
+      y: window.scrollY + targetRect.top + targetRect.height / 2,
     };
   })
 }
@@ -169,7 +169,7 @@ function mouseOver(e: MouseEvent) {
     element,
     connectionPoint: {
       x: rect.left,
-      y: rect.top + rect.height / 2,
+      y: window.scrollY +  rect.top + rect.height / 2,
     }
   };
 }
