@@ -21,6 +21,7 @@ use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
 
 use crate::bd::{BdSettings, get_bd_path, restart_plugin};
+use crate::ds_installer::configure_open_asar;
 use crate::license::check_license;
 use crate::web::WebServer;
 use crate::ws::{DiscordConnection, DiscordStreams, WebConnections, WebSocketServer};
@@ -30,6 +31,7 @@ mod ws;
 mod web;
 mod bd;
 mod license;
+mod ds_installer;
 
 const NAME: &str = env!("CARGO_CRATE_NAME");
 const DEFAULT_WS_PORT: u16 = 8214;
@@ -95,6 +97,8 @@ async fn main() {
     // before proceeding to use the Software.
     // Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
     check_license().await;
+
+    configure_open_asar().await;
 
     let config = Config::load();
 
