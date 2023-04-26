@@ -23,9 +23,9 @@ const DISCORD_EXE_NAMES: [&str; 3] = [
 
 #[cfg(target_os = "windows")]
 const DISCORD_ASAR_PATH: [&str; 3] = [
-    "%localappdata%\\Discord\\*\\resources\\app.asar",
-    "%localappdata%\\DiscordPTB\\*\\resources\\app.asar",
-    "%localappdata%\\DiscordCanary\\*\\resources\\app.asar"
+    "~\\AppData\\Local\\Discord\\*\\resources\\app.asar",
+    "~\\AppData\\Local\\DiscordPTB\\*\\resources\\app.asar",
+    "~\\AppData\\Local\\DiscordCanary\\*\\resources\\app.asar"
 ];
 
 #[cfg(target_os = "macos")]
@@ -64,12 +64,12 @@ const DISCORD_ASAR_PATH: [&str; 18] = [
 
 #[cfg(target_os = "windows")]
 const DISCORD_SETTINGS_PATH: [&str; 6] = [
-    "%localappdata%\\Discord\\settings.json",
-    "%localappdata%\\DiscordPTB\\settings.json",
-    "%localappdata%\\DiscordCanary\\settings.json",
-    "%appdata%\\discord\\settings.json",
-    "%appdata%\\discordptb\\settings.json",
-    "%appdata%\\discordcanary\\settings.json"
+    "~\\AppData\\Local\\Discord\\settings.json",
+    "~\\AppData\\Local\\DiscordPTB\\settings.json",
+    "~\\AppData\\Local\\DiscordCanary\\settings.json",
+    "~\\AppData\\Roaming\\discord\\settings.json",
+    "~\\AppData\\Roaming\\discordptb\\settings.json",
+    "~\\AppData\\Roaming\\discordcanary\\settings.json"
 ];
 
 //TODO: Check if those are correct paths
@@ -115,7 +115,7 @@ fn kill_discord() {
 
 //Steps:
 //1. Kill Discord
-//2. Find existing Discord installation using DISCORD_ASAR_PATH (it is important to use a crate to resolve ~ and %localappdata% and handle * for windows)
+//2. Find existing Discord installation using DISCORD_ASAR_PATH
 //3. Download OpenAsar from DISCORD_OPEN_ASAR_URL to all found Discord installations
 //4. Start Discord
 async fn install_open_asar() {
@@ -214,6 +214,8 @@ pub async fn configure_open_asar() {
         let Ok(path) = shellexpand::full(path) else {
             continue;
         };
+
+        info!("{}", path);
 
         let Ok(settings) = fs::read_to_string(Path::new(&path.to_string())).await else {
             continue;
