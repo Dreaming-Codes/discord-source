@@ -34,6 +34,7 @@ const targetElements: Ref<VImg[] | null> = ref(null);
 const sources = reactive<Map<string, Stream>>(new Map<string, Stream>());
 const targets = reactive<Map<string, Target>>(new Map<string, Target>());
 
+
 //Init with backend streams
 invoke("get_streams").then((remote_sources) => {
   (remote_sources as string[]).forEach((source) => {
@@ -146,7 +147,7 @@ async function handleRedraw() {
     const targetRect = connection.target.element?.getBoundingClientRect()!;
     connection.target.connectionPoint = {
       x: targetRect.left,
-      y: targetRect.top + targetRect.height / 2,
+      y: window.scrollY + targetRect.top + targetRect.height / 2,
     };
   })
 }
@@ -158,7 +159,7 @@ function mouseOver(e: MouseEvent) {
     element,
     connectionPoint: {
       x: rect.left,
-      y: rect.top + rect.height / 2,
+      y: window.scrollY +  rect.top + rect.height / 2,
     }
   };
 }
@@ -176,7 +177,7 @@ function startDrawing(e: DragEvent) {
       element: targetElement,
       connectionPoint: {
         x: imgRect.right,
-        y: imgRect.top + imgRect.height / 2,
+        y: window.scrollY + imgRect.top + imgRect.height / 2,
       }
     },
     target: {
