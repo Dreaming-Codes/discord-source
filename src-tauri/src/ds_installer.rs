@@ -1,6 +1,7 @@
 // Write a rust code to get the last release of https://github.com/GooseMod/OpenAsar and download the file app.asar
 
 use std::collections::HashMap;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
 use lazy_static::lazy_static;
@@ -156,10 +157,26 @@ async fn install_open_asar() {
     let response = reqwest::get(DISCORD_OPEN_ASAR_URL).await.expect("Error downloading OpenAsar");
     let bytes = response.bytes().await.expect("Error reading response");
 
+    //Discord resourced folder perms need
+    // to be changed to 777 on Linux and Mac for OpenAsar to be able to auto-update
+    //TODO: Find a way to get root privileges on Mac as well
+    #[cfg(target_os = "linux")]
+    {
+        info!("Changing Discord resources folder permissions");
+        tokio::process::Command::new("pkexec")
+            .arg("chmod")
+            .arg("-R")
+            .arg("777")
+            .args(asar_paths.iter().map(|path| path.replace("app.asar", "")))
+            .spawn().expect("Error changing Discord resources folder permissions")
+            .wait().await.expect("Error changing Discord resources folder permissions");
+        info!("Changed Discord resources folder permissions");
+    }
+
     for path in asar_paths.iter() {
         info!("Installing OpenAsar to {}", path);
-        let mut file = File::create(path).await.unwrap_or_else(|_| panic!("Error creating file {}", path));
-        file.write_all(bytes.as_ref()).await.unwrap_or_else(|_| panic!("Error writing to file {}", path));
+        let mut file = File::create(path).await.unwrap_or_else(|error| panic!("Error creating file {} with error {}", path, error));
+        file.write_all(bytes.as_ref()).await.unwrap_or_else(|error| panic!("Error writing to file {} with error {}", path, error));
     }
 }
 
