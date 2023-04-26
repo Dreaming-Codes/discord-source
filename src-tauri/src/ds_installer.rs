@@ -67,7 +67,11 @@ const DISCORD_ASAR_PATH: [&str; 18] = [
 const DISCORD_SETTINGS_PATH: [&str; 3] = [
     "%localappdata%\\Discord\\settings.json",
     "%localappdata%\\DiscordPTB\\settings.json",
-    "%localappdata%\\DiscordCanary\\settings.json"
+    "%localappdata%\\DiscordCanary\\settings.json",
+    "%appdata%\\discord\\settings.json",
+    "%appdata%\\discordptb\\settings.json",
+    "%appdata%\\discordcanary\\settings.json"
+
 ];
 
 //TODO: Check if those are correct paths
