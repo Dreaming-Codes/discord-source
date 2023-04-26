@@ -235,7 +235,9 @@ pub async fn configure_open_asar() {
             } else {
                 if !installation_run {
                     installation_run = true;
+                    info!("Installing OpenAsar");
                     install_open_asar().await;
+                    info!("Installed OpenAsar");
                 }
                 settings.openasar = Some(Openasar {
                     custom_flags: None,
