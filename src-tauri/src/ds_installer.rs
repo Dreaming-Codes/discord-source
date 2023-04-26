@@ -6,6 +6,7 @@ use tokio::fs;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tracing::info;
+use glob::glob;
 
 #[cfg(target_os = "windows")]
 const DISCORD_EXE_NAMES: [&str; 3] = [
@@ -124,31 +125,13 @@ async fn install_open_asar() {
     let mut asar_paths = Vec::new();
 
     for path in DISCORD_ASAR_PATH.iter() {
-        let inner_paths = path.split('*').collect::<Vec<&str>>();
+        let Ok(path) = shellexpand::full(path) else {
+            continue;
+        };
 
-        if inner_paths.len() == 1 {
-            let Ok(path) = shellexpand::full(path) else {
-                continue;
-            };
+        let paths = glob(&path).unwrap();
 
-            if !Path::new(&path.to_string()).exists() {
-                continue;
-            }
-
-            asar_paths.push(path.to_string());
-        } else {
-            //Resolve the first part of the path then for every folder in the resolved path, append the second part of the path and if it exists, add it to the list
-            let Ok(first_part) = shellexpand::full(inner_paths[0]) else {
-                continue;
-            };
-            let second_part = inner_paths[1];
-
-            let path = format!("{}/{}", first_part, second_part);
-
-            if Path::new(&path).exists() {
-                asar_paths.push(path);
-            }
-        }
+        asar_paths.extend(paths.filter_map(|path| path.ok()));
     }
 
     let response = reqwest::get(DISCORD_OPEN_ASAR_URL).await.expect("Error downloading OpenAsar");
@@ -171,9 +154,9 @@ async fn install_open_asar() {
     }
 
     for path in asar_paths.iter() {
-        info!("Installing OpenAsar to {}", path);
-        let mut file = File::create(path).await.unwrap_or_else(|error| panic!("Error creating file {} with error {}", path, error));
-        file.write_all(bytes.as_ref()).await.unwrap_or_else(|error| panic!("Error writing to file {} with error {}", path, error));
+        info!("Installing OpenAsar to {:?}", path);
+        let mut file = File::create(path).await.unwrap_or_else(|error| panic!("Error creating file {:?} with error {:?}", path, error));
+        file.write_all(bytes.as_ref()).await.unwrap_or_else(|error| panic!("Error writing to file {:?} with error {:?}", path, error));
     }
 }
 

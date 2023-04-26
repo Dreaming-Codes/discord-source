@@ -820,6 +820,7 @@ dependencies = [
  "directories 5.0.0",
  "discord-sdk",
  "futures-util",
+ "glob",
  "http",
  "lazy_static",
  "parking_lot",
