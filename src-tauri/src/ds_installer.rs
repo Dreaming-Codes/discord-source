@@ -62,16 +62,14 @@ const DISCORD_ASAR_PATH: [&str; 18] = [
     "~/.local/share/flatpak/app/com.discordapp.DiscordCanary/current/active/files/discordCanary/resources/app.asar"
 ];
 
-//TODO: Check if those are correct paths
 #[cfg(target_os = "windows")]
-const DISCORD_SETTINGS_PATH: [&str; 3] = [
+const DISCORD_SETTINGS_PATH: [&str; 6] = [
     "%localappdata%\\Discord\\settings.json",
     "%localappdata%\\DiscordPTB\\settings.json",
     "%localappdata%\\DiscordCanary\\settings.json",
     "%appdata%\\discord\\settings.json",
     "%appdata%\\discordptb\\settings.json",
     "%appdata%\\discordcanary\\settings.json"
-
 ];
 
 //TODO: Check if those are correct paths
