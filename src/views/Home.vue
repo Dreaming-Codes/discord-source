@@ -34,16 +34,6 @@ const targetElements: Ref<VImg[] | null> = ref(null);
 const sources = reactive<Map<string, Stream>>(new Map<string, Stream>());
 const targets = reactive<Map<string, Target>>(new Map<string, Target>());
 
-//TODO: Remove me before merge
-sources.set("test", {});
-sources.set("test2", {});
-sources.set("test1", {});
-sources.set("test3", {});
-sources.set("test4", {});
-sources.set("test5", {});
-
-targets.set("test1", {});
-
 
 //Init with backend streams
 invoke("get_streams").then((remote_sources) => {
