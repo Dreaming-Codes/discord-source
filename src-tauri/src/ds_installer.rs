@@ -215,8 +215,6 @@ pub async fn configure_open_asar() {
             continue;
         };
 
-        info!("{}", path);
-
         let Ok(settings) = fs::read_to_string(Path::new(&path.to_string())).await else {
             continue;
         };
