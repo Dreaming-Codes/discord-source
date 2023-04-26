@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeDevCommand": "pnpm run concurrently pnpm:bundlebd:build \"cargo test export_bindings --manifest-path src-tauri/Cargo.toml\" pnpm:discord:vite:watch pnpm:vite pnpm:bundlebd:dev",
-    "beforeBuildCommand": "pnpm run concurrently pnpm:bundlebd:build \"cargo test export_bindings --manifest-path src-tauri/Cargo.toml\" pnpm:discord:vite:build pnpm:vite:build",
+    "beforeDevCommand": "pnpm run concurrently pnpm:bundlebd:build pnpm:tauri:build-bindings pnpm:discord:vite:watch pnpm:vite pnpm:bundlebd:dev",
+    "beforeBuildCommand": "pnpm run concurrently pnpm:bundlebd:build pnpm:tauri:build-bindings pnpm:discord:vite:build pnpm:vite:build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
     "withGlobalTauri": false
