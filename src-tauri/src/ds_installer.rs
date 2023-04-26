@@ -1,15 +1,10 @@
-// Write a rust code to get the last release of https://github.com/GooseMod/OpenAsar and download the file app.asar
-
-use std::collections::HashMap;
-use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
 use lazy_static::lazy_static;
-use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
-use tauri::async_runtime::set;
+use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tracing::info;
 
 #[cfg(target_os = "windows")]
