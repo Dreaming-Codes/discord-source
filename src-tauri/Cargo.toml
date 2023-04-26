@@ -1,6 +1,6 @@
 [package]
 name = "discord-source"
-version = "0.0.7"
+version = "0.0.8"
 description = "A Tauri App"
 authors = ["DreamingCodes"]
 license = "../LICENSE.md"

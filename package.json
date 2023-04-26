@@ -1,7 +1,7 @@
 {
   "name": "discord-source",
   "private": true,
-  "version": "0.0.7",
+  "version": "0.0.8",
   "scripts": {
     "vite": "vite",
     "vite:dev": "vite",
@@ -23,28 +23,28 @@
     "roboto-fontface": "^0.10.0",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6",
-    "vuetify": "^3.1.12",
+    "vuetify": "^3.1.15",
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.2.3",
-    "@types/node": "^18.15.11",
+    "@types/node": "^18.16.1",
     "@types/webfontloader": "^1.6.35",
-    "@vitejs/plugin-vue": "^4.1.0",
+    "@vitejs/plugin-vue": "^4.2.0",
     "@vueuse/core": "^9.13.0",
     "bundlebd": "github:Neodymium7/BundleBD",
     "deepmerge": "^4.3.1",
-    "esbuild": "^0.17.15",
+    "esbuild": "^0.17.18",
     "material-design-icons-iconfont": "^6.7.0",
     "mkdirp": "^2.1.6",
-    "rollup": "^3.20.2",
-    "sass": "^1.60.0",
+    "rollup": "^3.21.0",
+    "sass": "^1.62.1",
     "touch": "^3.1.0",
     "typescript": "^4.9.5",
     "typescript-event-target": "^1.0.4",
-    "vite": "^4.2.1",
+    "vite": "^4.3.2",
     "vite-plugin-singlefile": "^0.13.5",
     "vite-plugin-vuetify": "^1.0.2",
-    "vue-tsc": "^1.2.0"
+    "vue-tsc": "^1.4.4"
   }
 }
