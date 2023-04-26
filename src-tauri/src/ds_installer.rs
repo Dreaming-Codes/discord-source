@@ -272,9 +272,9 @@ pub async fn configure_open_asar() {
         let settings = serde_json::to_string_pretty(&settings).expect("Error serializing settings");
 
         fs::write(Path::new(&path.to_string()), settings).await.expect("Error writing settings");
+    }
 
-        if should_kill_discord {
-            kill_discord();
-        }
+    if should_kill_discord {
+        kill_discord();
     }
 }
