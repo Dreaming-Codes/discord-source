@@ -147,7 +147,7 @@ async fn install_open_asar() {
             .arg("chmod")
             .arg("-R")
             .arg("777")
-            .args(asar_paths.iter().map(|path| path.replace("app.asar", "")))
+            .args(asar_paths.iter().map(|path| path.display().to_string().replace("app.asar", "")))
             .spawn().expect("Error changing Discord resources folder permissions")
             .wait().await.expect("Error changing Discord resources folder permissions");
         info!("Changed Discord resources folder permissions");
