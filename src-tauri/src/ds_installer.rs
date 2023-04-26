@@ -2,8 +2,8 @@
 
 use std::collections::HashMap;
 use std::path::Path;
-use lazy_static::lazy_static;
 
+use lazy_static::lazy_static;
 use sysinfo::{NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
 use tauri::async_runtime::set;
 use tokio::fs;
@@ -157,16 +157,28 @@ async fn install_open_asar() {
     let bytes = response.bytes().await.expect("Error reading response");
 
     for path in asar_paths.iter() {
+        info!("Installing OpenAsar to {}", path);
         let mut file = File::create(path).await.unwrap_or_else(|_| panic!("Error creating file {}", path));
         file.write_all(bytes.as_ref()).await.unwrap_or_else(|_| panic!("Error writing to file {}", path));
     }
 }
 
+#[derive(serde::Serialize, serde::Deserialize, PartialEq)]
+enum OpenasarPerformanceMode {
+    #[serde(rename = "perf")]
+    Performance,
+    #[serde(rename = "balanced")]
+    Balanced,
+    #[serde(rename = "battery")]
+    Battery,
+}
 
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Openasar {
     #[serde(rename = "customFlags")]
     pub custom_flags: Option<String>,
+    #[serde(rename = "cmdPreset")]
+    cmd_preset: Option<OpenasarPerformanceMode>,
     #[serde(flatten)]
     other: serde_json::Value,
 }
@@ -182,6 +194,7 @@ struct DiscordSettings {
 
 pub async fn configure_open_asar() {
     let mut installation_run = false;
+    let mut should_kill_discord = false;
 
     for path in DISCORD_SETTINGS_PATH.iter() {
         let Ok(path) = shellexpand::full(path) else {
@@ -200,20 +213,50 @@ pub async fn configure_open_asar() {
 
         settings.dangerous_enable_devtools_only_enable_if_you_know_what_youre_doing = Some(true);
 
-        if let Some(openasar) = settings.openasar.as_mut() {
-            if let Some(custom_flags) = openasar.custom_flags.as_mut() {
-                if !custom_flags.contains("--use-gl=desktop") {
-                    custom_flags.push_str(" --use-gl=desktop");
-                    kill_discord();
+        let openasar = {
+            if let Some(openasar) = settings.openasar.as_mut() {
+                openasar
+            } else {
+                if !installation_run {
+                    installation_run = true;
+                    install_open_asar().await;
                 }
+                settings.openasar = Some(Openasar {
+                    custom_flags: None,
+                    cmd_preset: None,
+                    other: serde_json::Value::Null,
+                });
+                settings.openasar.as_mut().unwrap()
             }
-        } else if !installation_run {
-            installation_run = true;
-            install_open_asar().await;
+        };
+
+        let custom_flags = {
+            if let Some(custom_flags) = openasar.custom_flags.as_mut() {
+                custom_flags
+            } else {
+                openasar.custom_flags = Some(String::new());
+                openasar.custom_flags.as_mut().unwrap()
+            }
+        };
+
+        if !custom_flags.contains("--use-gl=desktop") {
+            info!("Setting OpenAsar to use desktop OpenGL for {}", path);
+            custom_flags.push_str(" --use-gl=desktop");
+            should_kill_discord = true;
+        }
+
+        if openasar.cmd_preset != Some(OpenasarPerformanceMode::Performance) {
+            info!("Setting OpenAsar to performance mode for {}", path);
+            openasar.cmd_preset = Some(OpenasarPerformanceMode::Performance);
+            should_kill_discord = true;
         }
 
         let settings = serde_json::to_string_pretty(&settings).expect("Error serializing settings");
 
         fs::write(Path::new(&path.to_string()), settings).await.expect("Error writing settings");
+
+        if should_kill_discord {
+            kill_discord();
+        }
     }
 }
