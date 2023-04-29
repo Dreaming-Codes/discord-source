@@ -117,8 +117,19 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 tauri::async_runtime::spawn(async move {
                     loop {
                         let discord_connection = discord_connection.clone();
-                        let msg = discord_connection.read().await.as_ref().unwrap().ws_stream.lock().await.next().await;
-                        let status = handle_message(msg.unwrap().unwrap());
+
+                        let status = match discord_connection.write().await.as_ref() {
+                            None => {
+                                Status::Closed
+                            }
+                            Some(discord_connection) => {
+                                    let Some(Ok(msg)) = discord_connection.ws_stream.lock().await.next().await else {
+                                        continue;
+                                    };
+                                    handle_message(msg)
+                            }
+                        };
+
                         match status {
                             Status::Ok(event) => {
                                 match event {
