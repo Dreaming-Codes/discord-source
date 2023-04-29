@@ -5,6 +5,7 @@ import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
 import {ICEEvent} from "../../src-tauri/bindings/ICEEvent";
 import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
 import DiscordSourcePlugin from "../index";
+import { UpdateUserInfoEvent } from "../../src-tauri/bindings/UpdateUserInfoEvent";
 
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
@@ -15,6 +16,7 @@ interface DiscordStream {
 export class VideoManager {
     private ws: WS;
     private streams: Map<string, DiscordStream> = new Map();
+    private updateInfoInterval: number;
 
     constructor(ws: WS) {
         this.ws = ws;
@@ -22,6 +24,11 @@ export class VideoManager {
         this.ws.addEventListener("endCapture", (e) => this.onEndCaptureVideoStream(e));
         this.ws.addEventListener("answer", (e) => this.onAnswerEvent(e));
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
+
+        //TODO: Make this configurable in settings
+        this.updateInfoInterval = setInterval(()=>{
+            this.updateInfo(Array.from(this.streams.keys()));
+        }, 60000) as any as number;
     }
 
     public async newVideoStream(streamId: string, userId: string) {
@@ -31,9 +38,9 @@ export class VideoManager {
             return;
         }
 
-        let preview = null;
+        let preview;
         try {
-            preview = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+            preview = await this.getWebmPreview(streamId);
         } catch (e) {
             // ignoring
         }
@@ -52,8 +59,68 @@ export class VideoManager {
             type: "add",
             detail: {
                 streamId,
-                userId
+                userId,
+                info: {
+                    nickname: DiscordSourcePlugin.UserStore.getUser(userId).username,
+                    streamPreview: preview
+                }
             }
+        });
+    }
+
+    public async getWebmPreview(streamId: string): Promise<string> {
+        let bitmap = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+        let imageBitmap = await createImageBitmap(new ImageData(bitmap.data, bitmap.width, bitmap.height));
+
+        let canvas = document.createElement("canvas");
+        canvas.style.display = "none";
+        document.body.appendChild(canvas);
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        let ctx = canvas.getContext("2d");
+        ctx.canvas.height = bitmap.height;
+        ctx.canvas.width = bitmap.width;
+        ctx.drawImage(imageBitmap, 0, 0);
+
+        let data = canvas.toDataURL("image/webp");
+        document.body.removeChild(canvas);
+
+        return data;
+    }
+
+    public async updateInfo(streamsId: string[]) {
+        Utils.log("Received update request for streams", streamsId);
+
+        const updateRequests: UpdateUserInfoEvent[] = [];
+
+        for (const streamId of streamsId) {
+            const stream = this.streams.get(streamId);
+            if (!stream) {
+                Utils.error("Received update request for unknown stream", streamId, "while we have", this.streams.keys());
+                continue;
+            }
+
+            let preview;
+            try {
+                preview = await this.getWebmPreview(streamId);
+            } catch (e) {
+                Utils.error("Failed to get preview for stream", streamId, e);
+                continue;
+            }
+
+            updateRequests.push({
+                streamId,
+                userId: stream.userId,
+                info: {
+                    nickname: DiscordSourcePlugin.UserStore.getUser(stream.userId).username,
+                    streamPreview: preview
+                }
+            });
+        }
+
+        this.ws.sendEvent({
+            type: "updateUserInfo",
+            detail: updateRequests
         });
     }
 
@@ -81,6 +148,7 @@ export class VideoManager {
     }
 
     public async stop() {
+        clearInterval(this.updateInfoInterval);
         await this.ws.close();
         this.streams.forEach(stream => stream.peerConnection?.close());
     }

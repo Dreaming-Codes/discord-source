@@ -12,19 +12,16 @@ use parking_lot::Mutex as PLMutex;
 use tauri::{CustomMenuItem, Manager, RunEvent, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::Message;
-use tracing::{error, info, Level};
-use tracing_log::log::LevelFilter;
+use tracing::{error, info};
 use tracing_log::LogTracer;
 use tracing_subscriber::{filter, Layer};
-use tracing_subscriber::filter::FilterExt;
-use tracing_subscriber::fmt::writer::MakeWriterExt;
 use tracing_subscriber::layer::SubscriberExt;
 
 use crate::bd::{BdSettings, get_bd_path, restart_plugin};
 use crate::ds_installer::configure_open_asar;
 use crate::license::check_license;
 use crate::web::WebServer;
-use crate::ws::{DiscordConnection, DiscordStreams, WebConnections, WebSocketServer};
+use crate::ws::{DiscordConnection, DiscordStream, DiscordStreams, WebConnections, WebSocketServer};
 use crate::ws::message::{CaptureEvent, MessageType};
 
 mod ws;
@@ -127,7 +124,7 @@ async fn main() {
             bd_settings
         })
         .manage::<WebConnections>(Arc::new(RwLock::new(HashMap::new())))
-        .manage::<DiscordStreams>(Arc::new(RwLock::new(Vec::new())))
+        .manage::<DiscordStreams>(Arc::new(RwLock::new(HashMap::new())))
         .manage::<DiscordConnection>(Arc::new(RwLock::new(None)))
         .system_tray(SystemTray::new().with_menu(tray_menu))
         .on_system_tray_event(|app, event| match event {
@@ -286,7 +283,7 @@ async fn get_targets(web_connections: tauri::State<'_, WebConnections>) -> Resul
 }
 
 #[tauri::command]
-async fn get_streams(discord_streams: tauri::State<'_, DiscordStreams>) -> Result<Vec<String>, ()> {
+async fn get_streams(discord_streams: tauri::State<'_, DiscordStreams>) -> Result<HashMap<String, DiscordStream>, ()> {
     let discord_streams = discord_streams.read().await;
     Ok(discord_streams.clone())
 }
