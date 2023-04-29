@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-20.04, windows-latest]
+        platform: [ macos-latest, ubuntu-20.04, windows-latest ]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
@@ -44,6 +44,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Update version
+        run: pnpm run setVersion $(git describe --tags)
+
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
         env:
@@ -54,3 +57,22 @@ jobs:
         with:
           name: "artifacts-${{ matrix.platform }}"
           path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
+
+      - name: Get release tag
+        if: github.ref == 'refs/heads/master'
+        id: get_release_tag
+        run: |
+          TAG=$(git tag --points-at HEAD)
+          echo "::set-output name=tag::$TAG"
+
+      - name: Upload release
+        if: github.ref == 'refs/heads/master' && steps.get_release_tag.outputs.tag != ''
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
+          draft: true
+          tag: ${{ steps.get_tag.outputs.tag }}
+          commit: ${{ github.event.workflow_run.head_sha }}
+          makeLatest: true
+          updateOnlyUnreleased: true
+          allowUpdates: true
