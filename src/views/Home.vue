@@ -34,7 +34,6 @@ const targetElements: Ref<VImg[] | null> = ref(null);
 const sources = reactive<Map<string, Stream>>(new Map<string, Stream>());
 const targets = reactive<Map<string, Target>>(new Map<string, Target>());
 
-
 //Init with backend streams
 invoke("get_streams").then((remote_sources) => {
   (remote_sources as string[]).forEach((source) => {
@@ -265,7 +264,7 @@ function getColor(id: number) {
   <v-container class="fill-height" fluid>
     <v-row class="d-flex justify-space-between">
       <v-col cols="4">
-        <div v-auto-animate>
+        <div>
           <v-img v-for="key in sources.keys()" :key="key" :data-id="key" ref="sourceElements"
                  :src="'https://picsum.photos/1920/1080?' + key"
                  @load="imgLoad"
@@ -274,7 +273,7 @@ function getColor(id: number) {
       </v-col>
 
       <v-col cols="4">
-        <div v-auto-animate>
+        <div>
           <v-img v-for="key in [...targets.keys()].sort()" :key="key" :data-id="key" ref="targetElements"
                  :src="'https://picsum.photos/1920/1080?' + key"
                  :alt="key"
