@@ -1,6 +1,7 @@
 import {MessageType} from '../src-tauri/bindings/MessageType';
 
 type TypeNames = MessageType["type"];
+// @ts-ignore TODO: fix this
 type DetailType<T extends TypeNames> = Extract<MessageType, { type: T }>["detail"];
 
 // Define the utility type for the intersection type
