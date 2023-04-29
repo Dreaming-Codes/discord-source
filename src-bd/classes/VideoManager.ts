@@ -5,6 +5,7 @@ import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
 import {ICEEvent} from "../../src-tauri/bindings/ICEEvent";
 import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
 import DiscordSourcePlugin from "../index";
+import { UpdateUserInfoEvent } from "../../src-tauri/bindings/UpdateUserInfoEvent";
 
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
@@ -52,8 +53,43 @@ export class VideoManager {
             type: "add",
             detail: {
                 streamId,
-                userId
+                userId,
+                info: {
+                    nickname: DiscordSourcePlugin.UserStore.getUser(userId).username,
+                    streamPreview: Buffer.from(preview.data).toString("base64")
+                }
             }
+        });
+    }
+
+    //TODO: Call this every minute (configurable in settings)
+    public async updateInfo(streamsId: string[]) {
+        Utils.log("Received update request for streams", streamsId);
+
+        const updateRequests: UpdateUserInfoEvent[] = [];
+
+        streamsId.forEach(async streamId => {
+            const stream = this.streams.get(streamId);
+            if (!stream) {
+                Utils.error("Received update request for unknown stream", streamId, "while we have", this.streams.keys());
+                return;
+            }
+
+            const preview = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+
+            updateRequests.push({
+                streamId,
+                userId: stream.userId,
+                info: {
+                    nickname: DiscordSourcePlugin.UserStore.getUser(stream.userId).username,
+                    streamPreview: Buffer.from(preview.data).toString("base64")
+                }
+            });
+        });
+
+        this.ws.sendEvent({
+            type: "updateUserInfo",
+            detail: updateRequests
         });
     }
 

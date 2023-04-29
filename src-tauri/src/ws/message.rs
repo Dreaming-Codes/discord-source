@@ -1,3 +1,4 @@
+use std::io::Bytes;
 use ts_rs::TS;
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
@@ -19,7 +20,9 @@ pub enum MessageType {
     #[serde(rename = "endCapture")]
     EndCapture(CaptureEvent),
     #[serde(rename = "unlink")]
-    Unlink
+    Unlink,
+    #[serde(rename = "updateUserInfo")]
+    UpdateUserInfo(Vec<UpdateUserInfoEvent>)
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
@@ -29,6 +32,28 @@ pub struct AddStreamEvent {
     pub stream_id: String,
     #[serde(rename = "userId")]
     pub user_id: Option<String>,
+    #[serde(rename = "info")]
+    pub info: UserInfo
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[ts(export)]
+pub struct UserInfo {
+    pub nickname: String,
+    /// base64 encoded image
+    #[serde(rename = "streamPreview")]
+    pub stream_preview: String
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[ts(export)]
+pub struct UpdateUserInfoEvent {
+    #[serde(rename = "streamId")]
+    pub stream_id: String,
+    #[serde(rename = "userId")]
+    pub user_id: String,
+    #[serde(rename = "info")]
+    pub info: UserInfo
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]

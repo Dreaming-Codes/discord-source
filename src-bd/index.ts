@@ -2,11 +2,13 @@ import {WS} from "./classes/WS";
 import {Settings} from "./classes/Settings";
 import {Utils} from "./classes/Utils";
 import {VideoManager} from "./classes/VideoManager";
+import {UserStore} from "./types/UserStore";
 
 export default class DiscordSourcePlugin {
     static videoManager: VideoManager;
     public static VoiceEngine = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVoiceEngine")).getVoiceEngine() as VoiceEngine;
     public static VideoHandler = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byPrototypeFields("_handleVideoStreamId")).prototype;
+    public static UserStore = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getUser", "getCurrentUser")) as UserStore;
 
     async start() {
         if (!Settings.getPort()) {
