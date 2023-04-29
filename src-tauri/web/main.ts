@@ -5,7 +5,7 @@ const video = document.getElementById('video') as HTMLVideoElement;
 // @ts-ignore
 const ws = new WS(`ws://127.0.0.1:${window.ws_port}/${window.location.pathname.substring(1)}`);
 
-const peerConnection = new RTCPeerConnection();
+let peerConnection = new RTCPeerConnection();
 
 peerConnection.addEventListener("track", (event) => {
     console.log("Received track!");
@@ -47,3 +47,10 @@ ws.addEventListener("offer", async (event) => {
         }
     })
 });
+
+ws.addEventListener("unlink", async () =>{
+    peerConnection.close();
+    peerConnection = new RTCPeerConnection();
+
+    video.srcObject = null;
+})
