@@ -6,16 +6,16 @@ import {invoke} from "@tauri-apps/api/tauri";
 import type {VImg} from "vuetify/components/VImg";
 
 interface Connection {
-  source: BoundedElement,
-  target: BoundedElement,
+    source: BoundedElement,
+    target: BoundedElement,
 }
 
 interface BoundedElement {
-  element?: HTMLElement;
-  connectionPoint: {
-    x: number;
-    y: number;
-  };
+    element?: HTMLElement;
+    connectionPoint: {
+        x: number;
+        y: number;
+    };
 }
 
 let isMounted = false;
@@ -26,6 +26,8 @@ interface Target {
 }
 
 interface Stream {
+    streamPreview: string;
+    nickname: string;
 }
 
 const sourceElements: Ref<VImg[] | null> = ref(null);
@@ -36,80 +38,87 @@ const targets = reactive<Map<string, Target>>(new Map<string, Target>());
 
 //Init with backend streams
 invoke("get_streams").then((remote_sources) => {
-  (remote_sources as string[]).forEach((source) => {
-    sources.set(source, {});
-  })
+    Object.entries(remote_sources as Record<string, {
+        nickname: string,
+        streamPreview: string
+    }>).forEach(([streamId, {nickname, streamPreview}]) => {
+        sources.set(streamId, {
+            streamPreview,
+            nickname,
+        });
+    })
 })
 
 //Init with backend targets
 invoke("get_targets").then((remote_targets) => {
-  console.log(remote_targets);
-  Object.entries(remote_targets as { [key: string]: number | null }).forEach(([key, linked_stream]) => {
-    if (linked_stream) {
+    console.log(remote_targets);
+    Object.entries(remote_targets as { [key: string]: number | null }).forEach(([key, linked_stream]) => {
+        if (linked_stream) {
 
-      const unwatch = watch(targetElements, (newTargetElements) => {
+            const unwatch = watch(targetElements, (newTargetElements) => {
 
-        //Search element with matching data-id
-        newTargetElements?.every((elem) => {
-          if (elem.$attrs["data-id"] == key) {
-            //Stop watching for new elements
-            unwatch();
+                //Search element with matching data-id
+                newTargetElements?.every((elem) => {
+                    if (elem.$attrs["data-id"] == key) {
+                        //Stop watching for new elements
+                        unwatch();
 
-            //Get the source element
-            const sourceElement = sourceElements?.value?.find((elem) => elem.$attrs["data-id"] == linked_stream)!.$el as HTMLElement;
+                        //Get the source element
+                        const sourceElement = sourceElements?.value?.find((elem) => elem.$attrs["data-id"] == linked_stream)!.$el as HTMLElement;
 
-            connections.push({
-              source: {
-                element: sourceElement,
-                connectionPoint: {
-                  x: 0,
-                  y: 0,
-                }
-              },
-              target: {
-                element: elem.$el as HTMLElement,
-                connectionPoint: {
-                  x: 0,
-                  y: 0,
-                }
-              }
+                        connections.push({
+                            source: {
+                                element: sourceElement,
+                                connectionPoint: {
+                                    x: 0,
+                                    y: 0,
+                                }
+                            },
+                            target: {
+                                element: elem.$el as HTMLElement,
+                                connectionPoint: {
+                                    x: 0,
+                                    y: 0,
+                                }
+                            }
+                        })
+
+                        handleRedraw();
+
+                        //Break out of loop
+                        return false;
+                    }
+                })
+
+            }, {
+                flush: "post",
             })
-
-            handleRedraw();
-
-            //Break out of loop
-            return false;
-          }
-        })
-
-      }, {
-        flush: "post",
-      })
-    }
+        }
 
 
-    targets.set(key, {});
-  })
+        targets.set(key, {});
+    })
 })
 
 watchArray([sources, targets], handleRedraw, {
-  flush: "post",
+    flush: "post",
 })
 
 appWindow.listen("stream-added", (event) => {
-  sources.set(event.payload as string, {});
+    let payload = event.payload as [string, Stream];
+    sources.set(payload[0], payload[1]);
 })
 
 appWindow.listen("stream-removed", (event) => {
-  sources.delete(event.payload as string);
+    sources.delete(event.payload as string);
 })
 
 appWindow.listen("web-added", (event) => {
-  targets.set(event.payload as string, {});
+    targets.set(event.payload as string, {});
 })
 
 appWindow.listen("web-removed", (event) => {
-  targets.delete(event.payload as string);
+    targets.delete(event.payload as string);
 })
 
 appWindow.listen("discord-disconnected", () => {
@@ -119,177 +128,178 @@ appWindow.listen("discord-disconnected", () => {
 let hoveredElement: BoundedElement | null = null;
 
 onMounted(() => {
-  isMounted = true;
-  window.addEventListener("resize", handleRedraw)
+    isMounted = true;
+    window.addEventListener("resize", handleRedraw)
 })
 
 onUnmounted(() => {
-  isMounted = false;
-  window.removeEventListener("resize", handleRedraw)
+    isMounted = false;
+    window.removeEventListener("resize", handleRedraw)
 })
 
 async function handleRedraw() {
-  console.log("Redrawing svg");
-  await nextTick();
-  connections.forEach((connection, index) => {
-    if (!document.body.contains(connection.source.element!) || !document.body.contains(connection.target.element!)) {
-      connections.splice(index, 1);
-      return;
-    }
+    console.log("Redrawing svg");
+    await nextTick();
+    connections.forEach((connection, index) => {
+        if (!document.body.contains(connection.source.element!) || !document.body.contains(connection.target.element!)) {
+            connections.splice(index, 1);
+            return;
+        }
 
-    const sourceRect = connection.source.element?.getBoundingClientRect()!;
-    connection.source.connectionPoint = {
-      x: sourceRect.right,
-      y: sourceRect.top + sourceRect.height / 2,
-    };
+        const sourceRect = connection.source.element?.getBoundingClientRect()!;
+        connection.source.connectionPoint = {
+            x: sourceRect.right,
+            y: sourceRect.top + sourceRect.height / 2,
+        };
 
-    const targetRect = connection.target.element?.getBoundingClientRect()!;
-    connection.target.connectionPoint = {
-      x: targetRect.left,
-      y: window.scrollY + targetRect.top + targetRect.height / 2,
-    };
-  })
+        const targetRect = connection.target.element?.getBoundingClientRect()!;
+        connection.target.connectionPoint = {
+            x: targetRect.left,
+            y: window.scrollY + targetRect.top + targetRect.height / 2,
+        };
+    })
 }
 
 function mouseOver(e: MouseEvent) {
-  const element = (e.target as HTMLElement).parentElement!;
-  const rect = element.getBoundingClientRect();
-  hoveredElement = {
-    element,
-    connectionPoint: {
-      x: rect.left,
-      y: window.scrollY +  rect.top + rect.height / 2,
-    }
-  };
+    const element = (e.target as HTMLElement).parentElement!;
+    const rect = element.getBoundingClientRect();
+    hoveredElement = {
+        element,
+        connectionPoint: {
+            x: rect.left,
+            y: window.scrollY + rect.top + rect.height / 2,
+        }
+    };
 }
 
 function mouseOut() {
-  hoveredElement = null;
+    hoveredElement = null;
 }
 
 function startDrawing(e: DragEvent) {
-  const targetElement = (e.target as HTMLImageElement).parentElement!;
-  const imgRect = targetElement.getBoundingClientRect();
+    const targetElement = (e.target as HTMLImageElement).parentElement!;
+    const imgRect = targetElement.getBoundingClientRect();
 
-  let currentLine = reactive<Connection>({
-    source: {
-      element: targetElement,
-      connectionPoint: {
-        x: imgRect.right,
-        y: window.scrollY + imgRect.top + imgRect.height / 2,
-      }
-    },
-    target: {
-      connectionPoint: {
-        x: e.clientX,
-        y: e.clientY,
-      }
-    }
-  });
-  connections.push(currentLine);
+    let currentLine = reactive<Connection>({
+        source: {
+            element: targetElement,
+            connectionPoint: {
+                x: imgRect.right,
+                y: window.scrollY + imgRect.top + imgRect.height / 2,
+            }
+        },
+        target: {
+            connectionPoint: {
+                x: e.clientX,
+                y: e.clientY,
+            }
+        }
+    });
+    connections.push(currentLine);
 
-  function updateLine(e: MouseEvent) {
-    if (hoveredElement) {
-      currentLine.target = hoveredElement;
-    } else {
-      currentLine.target.connectionPoint = {
-        x: e.clientX,
-        y: e.clientY,
-      };
-    }
-  }
-
-  function stopDrawing() {
-    if (!hoveredElement) {
-      connections.pop();
-    } else {
-      //Find existing connection on target
-      const existingConnectionTarget = connections.filter((connection) => connection.target.element === hoveredElement?.element);
-      //Find existing connection on source
-      const existingConnectionSource = connections.filter((connection) => connection.source.element === targetElement);
-
-      console.log(existingConnectionSource.length, existingConnectionTarget.length);
-
-      const targetId = hoveredElement?.element?.dataset.id as string;
-
-      const sourceId = targetElement.dataset.id as string;
-
-
-      //If source and target are already connected, remove the connection
-      if (existingConnectionSource.length > 1 && existingConnectionTarget.length > 1 && existingConnectionSource[1].target.element === existingConnectionSource[0].target.element) {
-        connections.splice(connections.indexOf(existingConnectionSource[0]), 1);
-        connections.pop();
-        appWindow.emit("unlink-stream", {
-          target: targetId
-        });
-
-        console.log("Unlinking stream", sourceId, "from", targetId);
-      } else if (existingConnectionSource.length === 1 && existingConnectionTarget.length === 1) {
-        //If source and target are not connected to any other stream, create a connection
-
-        appWindow.emit("link-stream", {
-          target: targetId,
-          source: sourceId,
-        });
-        console.log("Linking stream", sourceId, "to", targetId);
-      } else {
-        connections.pop();
-        console.log("Invalid connection")
-      }
+    function updateLine(e: MouseEvent) {
+        if (hoveredElement) {
+            currentLine.target = hoveredElement;
+        } else {
+            currentLine.target.connectionPoint = {
+                x: e.clientX,
+                y: e.clientY,
+            };
+        }
     }
 
+    function stopDrawing() {
+        if (!hoveredElement) {
+            connections.pop();
+        } else {
+            //Find existing connection on target
+            const existingConnectionTarget = connections.filter((connection) => connection.target.element === hoveredElement?.element);
+            //Find existing connection on source
+            const existingConnectionSource = connections.filter((connection) => connection.source.element === targetElement);
 
-    window.removeEventListener("mousemove", updateLine);
-    window.removeEventListener("mouseup", stopDrawing);
-  }
+            console.log(existingConnectionSource.length, existingConnectionTarget.length);
 
-  window.addEventListener("mousemove", updateLine);
-  window.addEventListener("mouseup", stopDrawing);
+            const targetId = hoveredElement?.element?.dataset.id as string;
+
+            const sourceId = targetElement.dataset.id as string;
+
+
+            //If source and target are already connected, remove the connection
+            if (existingConnectionSource.length > 1 && existingConnectionTarget.length > 1 && existingConnectionSource[1].target.element === existingConnectionSource[0].target.element) {
+                connections.splice(connections.indexOf(existingConnectionSource[0]), 1);
+                connections.pop();
+                appWindow.emit("unlink-stream", {
+                    target: targetId
+                });
+
+                console.log("Unlinking stream", sourceId, "from", targetId);
+            } else if (existingConnectionSource.length === 1 && existingConnectionTarget.length === 1) {
+                //If source and target are not connected to any other stream, create a connection
+
+                appWindow.emit("link-stream", {
+                    target: targetId,
+                    source: sourceId,
+                });
+                console.log("Linking stream", sourceId, "to", targetId);
+            } else {
+                connections.pop();
+                console.log("Invalid connection")
+            }
+        }
+
+
+        window.removeEventListener("mousemove", updateLine);
+        window.removeEventListener("mouseup", stopDrawing);
+    }
+
+    window.addEventListener("mousemove", updateLine);
+    window.addEventListener("mouseup", stopDrawing);
 }
 
 function imgLoad() {
-  //TODO: Find a way that doesn't require a timeout
-  //This is needed for now because vuetify doesn't update the DOM immediately after the image is loaded and using nextTick doesn't work
-  setTimeout(handleRedraw, 100);
+    //TODO: Find a way that doesn't require a timeout
+    //This is needed for now because vuetify doesn't update the DOM immediately after the image is loaded and using nextTick doesn't work
+    setTimeout(handleRedraw, 100);
 }
 
 const colors = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"];
 
 function getColor(id: number) {
-  return colors[id % colors.length];
+    return colors[id % colors.length];
 }
 </script>
 
 <template>
-  <v-container class="fill-height" fluid>
-    <v-row class="d-flex justify-space-between">
-      <v-col cols="4">
-        <div>
-          <v-img v-for="key in sources.keys()" :key="key" :data-id="key" ref="sourceElements"
-                 :src="'https://picsum.photos/1920/1080?' + key"
-                 @load="imgLoad"
-                 @dragstart.prevent="startDrawing"></v-img>
-        </div>
-      </v-col>
+    <v-container class="fill-height" fluid>
+        <v-row class="d-flex justify-space-between">
+            <v-col cols="4">
+                <div>
+                    <v-img v-for="[streamId, info] in sources" :key="streamId" :data-id="streamId" ref="sourceElements"
+                           :src="info.streamPreview"
+                           @load="imgLoad"
+                           @dragstart.prevent="startDrawing">{{info.nickname}}</v-img>
+                </div>
+            </v-col>
 
-      <v-col cols="4">
-        <div>
-          <v-img v-for="key in [...targets.keys()].sort()" :key="key" :data-id="key" ref="targetElements"
-                 :src="'https://picsum.photos/1920/1080?' + key"
-                 :alt="key"
-                 @load="imgLoad"
-                 @mouseout="mouseOut"
-                 @mouseover="mouseOver"
-                 @dragstart.prevent>{{key}}</v-img>
-        </div>
-      </v-col>
-    </v-row>
-    <svg id="lineDrawer" class="position-absolute fill-height w-100">
-      <line v-for="(line, index) in connections" :stroke="getColor(index)" :x1="line.source.connectionPoint.x"
-            :x2="line.target.connectionPoint.x" :y1="line.source.connectionPoint.y"
-            :y2="line.target.connectionPoint.y" stroke-width="1"/>
-    </svg>
-  </v-container>
+            <v-col cols="4">
+                <div>
+                    <v-img v-for="key in [...targets.keys()].sort()" :key="key" :data-id="key" ref="targetElements"
+                           :src="'https://picsum.photos/1920/1080?' + key"
+                           :alt="key"
+                           @load="imgLoad"
+                           @mouseout="mouseOut"
+                           @mouseover="mouseOver"
+                           @dragstart.prevent>{{ key }}
+                    </v-img>
+                </div>
+            </v-col>
+        </v-row>
+        <svg id="lineDrawer" class="position-absolute fill-height w-100">
+            <line v-for="(line, index) in connections" :stroke="getColor(index)" :x1="line.source.connectionPoint.x"
+                  :x2="line.target.connectionPoint.x" :y1="line.source.connectionPoint.y"
+                  :y2="line.target.connectionPoint.y" stroke-width="1"/>
+        </svg>
+    </v-container>
 </template>
 
 <style lang="scss" scoped>

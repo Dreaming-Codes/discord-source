@@ -32,9 +32,9 @@ export class VideoManager {
             return;
         }
 
-        let preview = null;
+        let preview;
         try {
-            preview = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+            preview = await this.getWebmPreview(streamId);
         } catch (e) {
             // ignoring
         }
@@ -56,10 +56,30 @@ export class VideoManager {
                 userId,
                 info: {
                     nickname: DiscordSourcePlugin.UserStore.getUser(userId).username,
-                    streamPreview: Buffer.from(preview.data).toString("base64")
+                    streamPreview: preview
                 }
             }
         });
+    }
+
+    public async getWebmPreview(streamId: string): Promise<string> {
+        let bitmap = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+        let imageBitmap = await createImageBitmap(new ImageData(bitmap.data, bitmap.width, bitmap.height));
+
+        let canvas = document.createElement("canvas");
+        canvas.style.display = "none";
+        document.body.appendChild(canvas);
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        let ctx = canvas.getContext("2d");
+        ctx.canvas.height = bitmap.height;
+        ctx.canvas.width = bitmap.width;
+        ctx.drawImage(imageBitmap, 0, 0);
+
+        let data = canvas.toDataURL("image/webp");
+        document.body.removeChild(canvas);
+
+        return data;
     }
 
     //TODO: Call this every minute (configurable in settings)
@@ -75,14 +95,19 @@ export class VideoManager {
                 return;
             }
 
-            const preview = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
+            let preview;
+            try {
+                preview = await this.getWebmPreview(streamId);
+            } catch (e) {
+                return;
+            }
 
             updateRequests.push({
                 streamId,
                 userId: stream.userId,
                 info: {
                     nickname: DiscordSourcePlugin.UserStore.getUser(stream.userId).username,
-                    streamPreview: Buffer.from(preview.data).toString("base64")
+                    streamPreview: preview
                 }
             });
         });

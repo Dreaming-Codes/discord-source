@@ -5,6 +5,7 @@ use futures_util::{SinkExt, StreamExt};
 use futures_util::lock::Mutex;
 use futures_util::stream::{SplitSink, SplitStream};
 use parking_lot::RwLock as PLRwLock;
+use serde::Serialize;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
@@ -22,14 +23,20 @@ pub struct WebConnection {
     pub linked_stream: Arc<PLRwLock<Option<String>>>,
 }
 
+#[derive(Serialize, Clone)]
+pub struct DiscordStream {
+    #[serde(rename = "streamPreview")]
+    pub stream_preview: String,
+    pub nickname: String,
+}
+
 pub struct DiscordSplittedConnection {
     pub ws_sink: Arc<Mutex<SplitSink<WebSocketStream<TcpStream>, Message>>>,
     pub ws_stream: Arc<Mutex<SplitStream<WebSocketStream<TcpStream>>>>,
 }
 
-
 pub type WebConnections = Arc<RwLock<HashMap<String, WebConnection>>>;
-pub type DiscordStreams = Arc<RwLock<Vec<String>>>;
+pub type DiscordStreams = Arc<RwLock<HashMap<String, DiscordStream>>>;
 pub type DiscordConnection = Arc<RwLock<Option<DiscordSplittedConnection>>>;
 
 
@@ -116,14 +123,18 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                             Status::Ok(event) => {
                                 match event {
                                     MessageType::Add(stream) => {
-                                        info!("Added stream: {:?}", stream);
-                                        discord_streams.write().await.push(stream.stream_id.clone());
-                                        window.emit("stream-added", stream.stream_id).unwrap();
+                                        info!("Added stream: {:?}", stream.stream_id);
+                                        let stream_info = DiscordStream {
+                                            stream_preview: stream.info.stream_preview,
+                                            nickname: stream.info.nickname,
+                                        };
+                                        discord_streams.write().await.insert(stream.stream_id.clone(), stream_info.clone());
+                                        window.emit("stream-added", (stream.stream_id, stream_info)).unwrap();
                                     }
                                     MessageType::Remove(stream) => {
                                         info!("Removed stream: {:?}", stream);
                                         window.emit("stream-removed", stream.stream_id.clone()).unwrap();
-                                        discord_streams.write().await.retain(|id| id != &stream.stream_id);
+                                        discord_streams.write().await.remove(&stream.stream_id);
                                     }
                                     MessageType::ICE(ice) => {
                                         info!("ICE: {:?}", ice);
