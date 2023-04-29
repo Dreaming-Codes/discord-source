@@ -198,7 +198,6 @@ async fn main() {
                 let web_connections = web_connections.clone();
                 let discord_connection = discord_connection.clone();
                 tauri::async_runtime::spawn(async move {
-                    //TODO: Avoid reloading the page to unlink the stream
                     let web_connections = web_connections.write().await;
                     let web_connection = web_connections.get(&data.target).unwrap();
                     let _ = web_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
