@@ -109,6 +109,20 @@ appWindow.listen("stream-added", (event) => {
     sources.set(payload[0], payload[1]);
 })
 
+appWindow.listen("user-info-update", (event) => {
+    let payload = event.payload as { streamId: string, userId: string, info: Stream }[];
+    payload.forEach((update) => {
+        const stream = sources.get(update.streamId);
+        if (!stream) {
+            console.error("Received update for non-existing stream", update.streamId);
+            return;
+        }
+
+        stream.nickname = update.info.nickname;
+        stream.streamPreview = update.info.streamPreview;
+    });
+})
+
 appWindow.listen("stream-removed", (event) => {
     sources.delete(event.payload as string);
 })
@@ -277,7 +291,8 @@ function getColor(id: number) {
                     <v-img v-for="[streamId, info] in sources" :key="streamId" :data-id="streamId" ref="sourceElements"
                            :src="info.streamPreview"
                            @load="imgLoad"
-                           @dragstart.prevent="startDrawing">{{info.nickname}}</v-img>
+                           @dragstart.prevent="startDrawing">{{ info.nickname }}
+                    </v-img>
                 </div>
             </v-col>
 

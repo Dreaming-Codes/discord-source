@@ -16,6 +16,7 @@ interface DiscordStream {
 export class VideoManager {
     private ws: WS;
     private streams: Map<string, DiscordStream> = new Map();
+    private updateInfoInterval: number;
 
     constructor(ws: WS) {
         this.ws = ws;
@@ -23,6 +24,11 @@ export class VideoManager {
         this.ws.addEventListener("endCapture", (e) => this.onEndCaptureVideoStream(e));
         this.ws.addEventListener("answer", (e) => this.onAnswerEvent(e));
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
+
+        //TODO: Make this configurable in settings
+        this.updateInfoInterval = setInterval(()=>{
+            this.updateInfo(Array.from(this.streams.keys()));
+        }, 60000) as any as number;
     }
 
     public async newVideoStream(streamId: string, userId: string) {
@@ -82,24 +88,24 @@ export class VideoManager {
         return data;
     }
 
-    //TODO: Call this every minute (configurable in settings)
     public async updateInfo(streamsId: string[]) {
         Utils.log("Received update request for streams", streamsId);
 
         const updateRequests: UpdateUserInfoEvent[] = [];
 
-        streamsId.forEach(async streamId => {
+        for (const streamId of streamsId) {
             const stream = this.streams.get(streamId);
             if (!stream) {
                 Utils.error("Received update request for unknown stream", streamId, "while we have", this.streams.keys());
-                return;
+                continue;
             }
 
             let preview;
             try {
                 preview = await this.getWebmPreview(streamId);
             } catch (e) {
-                return;
+                Utils.error("Failed to get preview for stream", streamId, e);
+                continue;
             }
 
             updateRequests.push({
@@ -110,7 +116,7 @@ export class VideoManager {
                     streamPreview: preview
                 }
             });
-        });
+        }
 
         this.ws.sendEvent({
             type: "updateUserInfo",
@@ -142,6 +148,7 @@ export class VideoManager {
     }
 
     public async stop() {
+        clearInterval(this.updateInfoInterval);
         await this.ws.close();
         this.streams.forEach(stream => stream.peerConnection?.close());
     }

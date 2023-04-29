@@ -136,6 +136,10 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                         window.emit("stream-removed", stream.stream_id.clone()).unwrap();
                                         discord_streams.write().await.remove(&stream.stream_id);
                                     }
+                                    MessageType::UpdateUserInfo(user_info) => {
+                                        info!("Updating user info: {:?}", user_info.iter().map(|info| info.stream_id.clone()).collect::<Vec<String>>());
+                                        window.emit("user-info-update", user_info).unwrap();
+                                    }
                                     MessageType::ICE(ice) => {
                                         info!("ICE: {:?}", ice);
 

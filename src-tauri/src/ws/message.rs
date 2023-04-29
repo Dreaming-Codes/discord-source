@@ -1,7 +1,6 @@
-use std::io::Bytes;
 use ts_rs::TS;
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 #[serde(tag = "type", content = "detail")]
 pub enum MessageType {
@@ -25,7 +24,7 @@ pub enum MessageType {
     UpdateUserInfo(Vec<UpdateUserInfoEvent>)
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct AddStreamEvent {
     #[serde(rename = "streamId")]
@@ -36,7 +35,7 @@ pub struct AddStreamEvent {
     pub info: UserInfo
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct UserInfo {
     pub nickname: String,
@@ -45,7 +44,7 @@ pub struct UserInfo {
     pub stream_preview: String
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct UpdateUserInfoEvent {
     #[serde(rename = "streamId")]
@@ -56,7 +55,7 @@ pub struct UpdateUserInfoEvent {
     pub info: UserInfo
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct RemoveStreamEvent {
     #[serde(rename = "streamId")]
@@ -64,7 +63,7 @@ pub struct RemoveStreamEvent {
 }
 
 /// stream_id is optional since it's present only if the event is from discord
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct ICEEvent {
     #[serde(rename = "streamId")]
@@ -74,7 +73,7 @@ pub struct ICEEvent {
 }
 
 /// stream_id is optional since it's present only if the event is from discord
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct AnswerOfferEvent {
     #[serde(rename = "streamId")]
@@ -83,7 +82,7 @@ pub struct AnswerOfferEvent {
     pub sdp: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
+#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
 #[ts(export)]
 pub struct CaptureEvent {
     #[serde(rename = "streamId")]
