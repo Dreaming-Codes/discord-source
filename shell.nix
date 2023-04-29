@@ -12,6 +12,7 @@ let
     libayatana-appindicator
     cargo
     rustc
+    glib-networking
   ];
 
   packages = with pkgs; [
@@ -27,6 +28,7 @@ let
     rustc
     nodejs
     nodePackages.pnpm
+    glib-networking
   ];
 in
 pkgs.mkShell {
@@ -35,6 +37,7 @@ pkgs.mkShell {
   shellHook =
     ''
       export LD_LIBRARY_PATH=${pkgs.lib.makeLibraryPath libraries}:$LD_LIBRARY_PATH
+      export GIO_MODULE_DIR=${pkgs.glib-networking}/lib/gio/modules/
       export WEBKIT_DISABLE_COMPOSITING_MODE=1
     '';
 }
