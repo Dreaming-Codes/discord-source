@@ -5,24 +5,33 @@ const video = document.getElementById('video') as HTMLVideoElement;
 // @ts-ignore
 const ws = new WS(`ws://127.0.0.1:${window.ws_port}/${window.location.pathname.substring(1)}`);
 
-const peerConnection = new RTCPeerConnection();
+let peerConnection: RTCPeerConnection;
 
-peerConnection.addEventListener("track", (event) => {
-    console.log("Received track!");
-    video.srcObject = new MediaStream([event.track]);
-})
-
-peerConnection.addEventListener("icecandidate", ({candidate}) => {
-    if (!candidate) {
-        return;
+function resetPeerConnection() {
+    if(peerConnection) {
+        peerConnection.close();
     }
 
-    ws.sendEvent({
-        type: "ice", detail: {
-            candidate: JSON.stringify(candidate.toJSON())
+    peerConnection = new RTCPeerConnection();
+
+    peerConnection.addEventListener("track", (event) => {
+        console.log("Received track!");
+        video.srcObject = new MediaStream([event.track]);
+    })
+
+    peerConnection.addEventListener("icecandidate", ({candidate}) => {
+        if (!candidate) {
+            return;
         }
-    });
-})
+
+        ws.sendEvent({
+            type: "ice", detail: {
+                candidate: JSON.stringify(candidate.toJSON())
+            }
+        });
+    })
+}
+
 
 ws.addEventListener("ice", (event) => {
     console.log("Received ice!");
@@ -47,3 +56,11 @@ ws.addEventListener("offer", async (event) => {
         }
     })
 });
+
+ws.addEventListener("unlink", async () => {
+    resetPeerConnection();
+
+    video.srcObject = null;
+});
+
+resetPeerConnection();

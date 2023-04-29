@@ -18,6 +18,8 @@ pub enum MessageType {
     Capture(CaptureEvent),
     #[serde(rename = "endCapture")]
     EndCapture(CaptureEvent),
+    #[serde(rename = "unlink")]
+    Unlink
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS)]
