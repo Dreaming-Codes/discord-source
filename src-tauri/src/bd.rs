@@ -1,7 +1,7 @@
 use directories::BaseDirs;
 use tokio::fs::read_to_string;
 use tokio::io;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::{error, info};
 
 use crate::DEFAULT_WS_PORT;
@@ -41,24 +41,32 @@ impl BdSettings {
 }
 
 #[tauri::command]
-pub async fn restart_plugin(path: String) -> bool {
+pub async fn install_plugin(path: String) -> bool {
     info!("Installing plugin {}", path);
 
-    //Removing the plugin file to force a reload (if it exists)
-    if let Ok(..) = tokio::fs::remove_file(path.clone()).await {
-        info!("Removed plugin {}", path);
-        //Sleep for 5 seconds to allow BetterDiscord to unload the plugin
-        tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-    }
+    if let Ok(mut file) = tokio::fs::OpenOptions::new().write(true).read(true).append(false).create(true).open(path).await {
+        let mut old_plugin_string = String::new();
+        if let Err(e) = file.read_to_string(&mut old_plugin_string).await {
+            error!("Failed to read plugin {}", e);
+            return false;
+        }
+        let installed_version_md5 = md5::compute(old_plugin_string);
+        let latest_version_md5 = md5::compute(PLUGIN);
 
-    if let Ok(mut file) = tokio::fs::OpenOptions::new().write(true).create(true).open(path).await {
+        if installed_version_md5 == latest_version_md5 {
+            info!("Plugin is up to date");
+            return true;
+        }
+
+        info!("Plugin is out of date, updating, old md5: {:?}, new md5: {:?}", installed_version_md5, latest_version_md5);
+
         if let Err(e) = file.write_all(PLUGIN.as_bytes()).await {
             error!("Failed to write plugin: {}", e);
             return false;
         }
     }
 
-    true
+    false
 }
 
 #[tauri::command]

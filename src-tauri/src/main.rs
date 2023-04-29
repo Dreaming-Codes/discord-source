@@ -17,7 +17,7 @@ use tracing_log::LogTracer;
 use tracing_subscriber::{filter, Layer};
 use tracing_subscriber::layer::SubscriberExt;
 
-use crate::bd::{BdSettings, get_bd_path, restart_plugin};
+use crate::bd::{BdSettings, get_bd_path, install_plugin};
 use crate::ds_installer::configure_open_asar;
 use crate::license::check_license;
 use crate::web::WebServer;
@@ -151,7 +151,7 @@ async fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::restart_plugin, get_config, get_streams, get_targets])
+        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config, get_streams, get_targets])
         .setup(|app| {
             let discord_streams: tauri::State<'_, DiscordStreams> = app.state();
             let web_connections: tauri::State<'_, WebConnections> = app.state();
@@ -218,7 +218,7 @@ async fn main() {
 
             let path = cfg.config.lock().bd_path.as_ref().expect("bd_path isn't defined").clone();
             tauri::async_runtime::spawn(async move {
-                restart_plugin(format!("{}/plugins/DiscordSourcePlugin.plugin.js", path)).await;
+                install_plugin(format!("{}/plugins/DiscordSourcePlugin.plugin.js", path)).await;
             });
 
             Ok(())
