@@ -30,8 +30,8 @@ interface Stream {
     nickname: string;
 }
 
-const sourceElements: Ref<VImg[] | null> = ref(null);
-const targetElements: Ref<VImg[] | null> = ref(null);
+const sourceElements: Ref<HTMLDivElement[] | null> = ref(null);
+const targetElements: Ref<HTMLDivElement[] | null> = ref(null);
 
 const sources = reactive<Map<string, Stream>>(new Map<string, Stream>());
 const targets = reactive<Map<string, Target>>(new Map<string, Target>());
@@ -59,12 +59,12 @@ invoke("get_targets").then((remote_targets) => {
 
                 //Search element with matching data-id
                 newTargetElements?.every((elem) => {
-                    if (elem.$attrs["data-id"] == key) {
+                    if (elem.getAttribute("data-id") == key) {
                         //Stop watching for new elements
                         unwatch();
 
                         //Get the source element
-                        const sourceElement = sourceElements?.value?.find((elem) => elem.$attrs["data-id"] == linked_stream)!.$el as HTMLElement;
+                        const sourceElement = sourceElements?.value?.find((elem) => elem.getAttribute("data-id") == `${linked_stream}`)!;
 
                         connections.push({
                             source: {
@@ -75,7 +75,7 @@ invoke("get_targets").then((remote_targets) => {
                                 }
                             },
                             target: {
-                                element: elem.$el as HTMLElement,
+                                element: elem,
                                 connectionPoint: {
                                     x: 0,
                                     y: 0,
@@ -191,7 +191,7 @@ function mouseOut() {
 }
 
 function startDrawing(e: DragEvent) {
-    const targetElement = (e.target as HTMLImageElement).parentElement!;
+    const targetElement = (e.target as HTMLImageElement);
     const imgRect = targetElement.getBoundingClientRect();
 
     let currentLine = reactive<Connection>({
@@ -287,12 +287,17 @@ function getColor(id: number) {
     <v-container class="fill-height" fluid>
         <v-row class="d-flex justify-space-between">
             <v-col cols="4">
-                <div>
-                    <v-img v-for="[streamId, info] in sources" :key="streamId" :data-id="streamId" ref="sourceElements"
-                           :src="info.streamPreview"
-                           @load="imgLoad"
-                           alt=""
-                           @dragstart.prevent="startDrawing">
+                <div v-for="[streamId, info] in sources"
+                     :key="streamId"
+                     :data-id="streamId"
+                     ref="sourceElements"
+                     draggable="true"
+                     @dragstart.prevent="startDrawing">
+                    <v-img
+                        :src="info.streamPreview"
+                        :data-id="streamId"
+                        alt=""
+                        @load="imgLoad">
                         <div class="source-target-label">
                             {{ info.nickname }}
                         </div>
@@ -301,14 +306,19 @@ function getColor(id: number) {
             </v-col>
 
             <v-col cols="4">
-                <div>
-                    <v-img v-for="key in [...targets.keys()].sort()" :key="key" :data-id="key" ref="targetElements"
-                           :src="'https://picsum.photos/1920/1080?' + key"
-                           alt=""
-                           @load="imgLoad"
-                           @mouseout="mouseOut"
-                           @mouseover="mouseOver"
-                           @dragstart.prevent>
+                <div v-for="key in [...targets.keys()].sort()"
+                     :key="key"
+                     :data-id="key"
+                     ref="targetElements"
+                     @mouseout="mouseOut"
+                     @mouseover="mouseOver"
+                     draggable="true"
+                     @dragstart.prevent>
+                    <v-img
+                        :src="'https://picsum.photos/1920/1080?' + key"
+                        :data-id="key"
+                        alt=""
+                        @load="imgLoad">
                         <div class="source-target-label">
                             {{ key }}
                         </div>
