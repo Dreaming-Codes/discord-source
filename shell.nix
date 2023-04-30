@@ -2,7 +2,7 @@ let
   pkgs = import <nixpkgs> { };
 
   libraries = with pkgs;[
-    webkitgtk
+    webkitgtk_4_1
     gtk3
     cairo
     gdk-pixbuf
@@ -12,9 +12,11 @@ let
     libayatana-appindicator
     cargo
     rustc
+    libsoup_3
   ];
 
   packages = with pkgs; [
+    webkitgtk_4_1
     pkg-config
     dbus
     openssl_3
