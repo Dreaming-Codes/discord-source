@@ -27,19 +27,7 @@ export default class DiscordSourcePlugin {
 
         Utils.log("Connecting to Discord Source...");
         const ws = new WS(Settings.getPort());
-        if (!await ws.connect()) {
-            await Utils.asyncShowConfirmationModal("Discord Source", "Failed to connect to Discord Source, please make sure that the app is started", {
-                danger: true,
-                confirmText: "Open Discord Source website",
-                cancelText: "Disable plugin",
-                onConfirm: () => {
-                    window.open("https://github.com/Dreaming-Codes/discord-source");
-                }
-            });
-
-            BdApi.Plugins.disable(DiscordSourcePlugin.name);
-            return;
-        }
+        await ws.connect();
 
         DiscordSourcePlugin.videoManager = new VideoManager(ws);
 

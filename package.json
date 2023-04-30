@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@mdi/font": "^7.2.96",
-    "@tauri-apps/api": "^1.2.0",
+    "@tauri-apps/api": "2.0.0-alpha.3",
     "roboto-fontface": "^0.10.0",
     "vue": "^3.2.47",
     "vue-router": "^4.1.6",
@@ -30,7 +30,7 @@
     "webfontloader": "^1.6.28"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.2.3",
+    "@tauri-apps/cli": "2.0.0-alpha.8",
     "@types/node": "^18.16.1",
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^4.2.0",
