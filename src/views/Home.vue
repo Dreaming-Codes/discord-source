@@ -291,7 +291,11 @@ function getColor(id: number) {
                     <v-img v-for="[streamId, info] in sources" :key="streamId" :data-id="streamId" ref="sourceElements"
                            :src="info.streamPreview"
                            @load="imgLoad"
-                           @dragstart.prevent="startDrawing">{{ info.nickname }}
+                           alt=""
+                           @dragstart.prevent="startDrawing">
+                        <div class="source-target-label pa-1 text-body-2 text-center">
+                            {{ info.nickname }}
+                        </div>
                     </v-img>
                 </div>
             </v-col>
@@ -300,11 +304,14 @@ function getColor(id: number) {
                 <div>
                     <v-img v-for="key in [...targets.keys()].sort()" :key="key" :data-id="key" ref="targetElements"
                            :src="'https://picsum.photos/1920/1080?' + key"
-                           :alt="key"
+                           alt=""
                            @load="imgLoad"
                            @mouseout="mouseOut"
                            @mouseover="mouseOver"
-                           @dragstart.prevent>{{ key }}
+                           @dragstart.prevent>
+                        <div class="source-target-label pa-1 text-body-2 text-center">
+                            {{ key }}
+                        </div>
                     </v-img>
                 </div>
             </v-col>
@@ -318,6 +325,10 @@ function getColor(id: number) {
 </template>
 
 <style lang="scss" scoped>
+.source-target-label {
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
 #lineDrawer {
   pointer-events: none;
   left: 0;
