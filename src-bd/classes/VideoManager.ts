@@ -75,12 +75,15 @@ export class VideoManager {
         let canvas = document.createElement("canvas");
         canvas.style.display = "none";
         document.body.appendChild(canvas);
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
+        canvas.width = 426; // 240p
+        canvas.height = 240;
         let ctx = canvas.getContext("2d");
-        ctx.canvas.height = bitmap.height;
-        ctx.canvas.width = bitmap.width;
-        ctx.drawImage(imageBitmap, 0, 0);
+        ctx.canvas.width = canvas.width;
+        ctx.canvas.height = canvas.height;
+
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        Utils.drawImageScaled(imageBitmap, ctx);
 
         let data = canvas.toDataURL("image/webp");
         document.body.removeChild(canvas);

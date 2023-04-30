@@ -67,7 +67,14 @@ export class Utils {
         return [`%c[${DiscordSourcePlugin.name}]`, 'color: #bada55', ...msg];
     }
 
-
-
+    static drawImageScaled(img: ImageBitmap, ctx: CanvasRenderingContext2D) {
+        const canvas = ctx.canvas;
+        const hRatio = canvas.width / img.width;
+        const vRatio = canvas.height / img.height
+        const ratio = Math.min(hRatio, vRatio);
+        const centerShiftX = (canvas.width - img.width * ratio) / 2;
+        const centerShiftY = (canvas.height - img.height * ratio) / 2;
+        ctx.drawImage(img, 0, 0, img.width, img.height, centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
+    }
 
 }
