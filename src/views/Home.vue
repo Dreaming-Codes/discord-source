@@ -289,15 +289,15 @@ function getColor(id: number) {
             <v-col cols="4">
                 <div v-for="[streamId, info] in sources"
                      :key="streamId"
-                     :data-id="streamId"
                      ref="sourceElements"
+                     :data-id="streamId"
                      draggable="true"
                      @dragstart.prevent="startDrawing">
                     <v-img
-                        :src="info.streamPreview"
-                        :data-id="streamId"
-                        alt=""
-                        @load="imgLoad">
+                            :data-id="streamId"
+                            :src="info.streamPreview"
+                            alt=""
+                            @load="imgLoad">
                         <div class="source-target-label">
                             {{ info.nickname }}
                         </div>
@@ -308,17 +308,17 @@ function getColor(id: number) {
             <v-col cols="4">
                 <div v-for="key in [...targets.keys()].sort()"
                      :key="key"
-                     :data-id="key"
                      ref="targetElements"
+                     :data-id="key"
+                     draggable="true"
                      @mouseout="mouseOut"
                      @mouseover="mouseOver"
-                     draggable="true"
                      @dragstart.prevent>
                     <v-img
-                        :src="'https://picsum.photos/1920/1080?' + key"
-                        :data-id="key"
-                        alt=""
-                        @load="imgLoad">
+                            :data-id="key"
+                            :src="'https://picsum.photos/1920/1080?' + key"
+                            alt=""
+                            @load="imgLoad">
                         <div class="source-target-label">
                             {{ key }}
                         </div>
