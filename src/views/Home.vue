@@ -293,7 +293,7 @@ function getColor(id: number) {
                            @load="imgLoad"
                            alt=""
                            @dragstart.prevent="startDrawing">
-                        <div class="source-target-label pa-1 text-body-2 text-center">
+                        <div class="source-target-label">
                             {{ info.nickname }}
                         </div>
                     </v-img>
@@ -309,7 +309,7 @@ function getColor(id: number) {
                            @mouseout="mouseOut"
                            @mouseover="mouseOver"
                            @dragstart.prevent>
-                        <div class="source-target-label pa-1 text-body-2 text-center">
+                        <div class="source-target-label">
                             {{ key }}
                         </div>
                     </v-img>
@@ -325,8 +325,13 @@ function getColor(id: number) {
 </template>
 
 <style lang="scss" scoped>
+@import "vuetify/styles";
+
 .source-target-label {
   background-color: rgba(0, 0, 0, 0.75);
+  @extend .pa-1;
+  @extend .text-body-2;
+  @extend .text-center;
 }
 
 #lineDrawer {
