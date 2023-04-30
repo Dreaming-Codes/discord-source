@@ -49,7 +49,7 @@ jobs:
       - name: Update version
         run: pnpm run setVersion $(git describe --tags)
 
-      - uses: JonasKruckenberg/tauri-build@v1
+      - uses: Dreaming-Codes/tauri-build@next
         id: tauri_build
         env:
           TAURI_KEY_PASSWORD: ''
