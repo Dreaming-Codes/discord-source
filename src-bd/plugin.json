@@ -2,6 +2,6 @@
   "name": "DiscordSourcePlugin",
   "author": "DreamingCodes",
   "description": "Plugin that allows you to capture discord streams with OBS",
-  "version": "0.0.11",
+  "version": "0.0.13",
   "installScript": false
 }
