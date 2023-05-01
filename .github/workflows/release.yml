@@ -7,6 +7,7 @@ on:
         required: true
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build:
@@ -31,7 +32,16 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "release/${{ github.event.inputs.tag }}"
           git add ./src-tauri/tauri.conf.json ./src-bd/plugin.json ./src-tauri/Cargo.toml
           git commit -m "version: ${{ github.event.inputs.tag }}"
           git tag ${{ github.event.inputs.tag }}
           git push
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: 'Release ${{ github.event.inputs.tag }}'
+          body: ''
+          base: 'master'
+          branch: 'release/${{ github.event.inputs.tag }}'
