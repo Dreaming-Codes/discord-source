@@ -26,7 +26,10 @@ export class VideoManager {
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
 
         //TODO: Make this configurable in settings
-        this.updateInfoInterval = setInterval(()=>{
+        this.updateInfoInterval = setInterval(() => {
+            if (this.streams.size === 0) {
+                return;
+            }
             this.updateInfo(Array.from(this.streams.keys()));
         }, 60000) as any as number;
     }
