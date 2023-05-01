@@ -19,7 +19,7 @@ export default class DiscordSourcePlugin {
                 onConfirm: () => {
                     window.open("https://github.com/Dreaming-Codes/discord-source");
                 },
-            })
+            });
 
             BdApi.Plugins.disable(DiscordSourcePlugin.name);
             return;
@@ -32,18 +32,19 @@ export default class DiscordSourcePlugin {
         DiscordSourcePlugin.videoManager = new VideoManager(ws);
 
         BdApi.Patcher.after(DiscordSourcePlugin.name, DiscordSourcePlugin.VideoHandler, "_handleVideoStreamId", (_, [streamData]: [StreamData]) => {
-            if(streamData.streamId) {
+            if (streamData.streamId) {
                 DiscordSourcePlugin.videoManager.newVideoStream(streamData.streamId, streamData.userId);
-            }else{
+            } else {
                 DiscordSourcePlugin.videoManager.removeVideoStream(streamData.userId);
             }
         });
 
         Utils.log("Plugin started");
     }
+
     stop() {
         BdApi.Patcher.unpatchAll(DiscordSourcePlugin.name);
-        DiscordSourcePlugin.videoManager.stop();
+        if (DiscordSourcePlugin.videoManager) DiscordSourcePlugin.videoManager.stop();
         Utils.log("Plugin stopped");
     }
 }
