@@ -40,8 +40,8 @@ devDependencies:
     specifier: ^9.13.0
     version: 9.13.0(vue@3.2.47)
   bundlebd:
-    specifier: github:Neodymium7/BundleBD
-    version: github.com/Neodymium7/BundleBD/fc288b37473e3fc2465692b138506f81ca419046(esbuild@0.17.18)
+    specifier: ^4.0.0
+    version: 4.0.0(esbuild@0.17.18)
   concurrently:
     specifier: ^8.0.1
     version: 8.0.1
@@ -2318,6 +2318,28 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
+  /bundlebd@4.0.0(esbuild@0.17.18):
+    resolution: {integrity: sha512-HJCuCcCxkFDk7IJtRqnKHs6PbuKdVePbXYAbBaVyZeEEq16GWgUawZPU0+llFbygGM4Tt03UWiuLSVi+4TDNPg==}
+    hasBin: true
+    dependencies:
+      '@rollup/plugin-alias': 4.0.4(rollup@2.79.1)
+      '@rollup/plugin-image': 3.0.2(rollup@2.79.1)
+      '@rollup/plugin-json': 4.1.0(rollup@2.79.1)
+      '@rollup/plugin-node-resolve': 14.1.0(rollup@2.79.1)
+      '@rollup/plugin-replace': 4.0.0(rollup@2.79.1)
+      '@svgr/rollup': 6.5.1
+      '@types/bdapi': github.com/zerthox/betterdiscord-types/8cf51acb1334b9032d35754de88536498340adb2
+      less: 4.1.3
+      rollup: 2.79.1
+      rollup-plugin-esbuild: 4.10.3(esbuild@0.17.18)(rollup@2.79.1)
+      rollup-plugin-styles: 4.0.0(rollup@2.79.1)
+      sass: 1.62.1
+      stylus: 0.59.0
+    transitivePeerDependencies:
+      - esbuild
+      - supports-color
+    dev: true
+
   /callsites@3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
@@ -2593,7 +2615,7 @@ packages:
       supports-color:
         optional: true
     dependencies:
-      ms: 2.1.3
+      ms: 2.1.2
     dev: true
     optional: true
 
@@ -3130,11 +3152,6 @@ packages:
 
   /ms@2.1.2:
     resolution: {integrity: sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==}
-
-  /ms@2.1.3:
-    resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
-    dev: true
-    optional: true
 
   /muggle-string@0.2.2:
     resolution: {integrity: sha512-YVE1mIJ4VpUMqZObFndk9CJu6DBJR/GB13p3tXuNbwD4XExaI5EOuRl6BHeIDxIqXZVxSfAC+y6U1Z/IxCfKUg==}
@@ -4210,31 +4227,6 @@ packages:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
-    dev: true
-
-  github.com/Neodymium7/BundleBD/fc288b37473e3fc2465692b138506f81ca419046(esbuild@0.17.18):
-    resolution: {tarball: https://codeload.github.com/Neodymium7/BundleBD/tar.gz/fc288b37473e3fc2465692b138506f81ca419046}
-    id: github.com/Neodymium7/BundleBD/fc288b37473e3fc2465692b138506f81ca419046
-    name: bundlebd
-    version: 3.4.2
-    hasBin: true
-    dependencies:
-      '@rollup/plugin-alias': 4.0.4(rollup@2.79.1)
-      '@rollup/plugin-image': 3.0.2(rollup@2.79.1)
-      '@rollup/plugin-json': 4.1.0(rollup@2.79.1)
-      '@rollup/plugin-node-resolve': 14.1.0(rollup@2.79.1)
-      '@rollup/plugin-replace': 4.0.0(rollup@2.79.1)
-      '@svgr/rollup': 6.5.1
-      '@types/bdapi': github.com/zerthox/betterdiscord-types/8cf51acb1334b9032d35754de88536498340adb2
-      less: 4.1.3
-      rollup: 2.79.1
-      rollup-plugin-esbuild: 4.10.3(esbuild@0.17.18)(rollup@2.79.1)
-      rollup-plugin-styles: 4.0.0(rollup@2.79.1)
-      sass: 1.62.1
-      stylus: 0.59.0
-    transitivePeerDependencies:
-      - esbuild
-      - supports-color
     dev: true
 
   github.com/zerthox/betterdiscord-types/8cf51acb1334b9032d35754de88536498340adb2:

@@ -35,7 +35,7 @@
     "@types/webfontloader": "^1.6.35",
     "@vitejs/plugin-vue": "^4.2.0",
     "@vueuse/core": "^9.13.0",
-    "bundlebd": "github:Neodymium7/BundleBD",
+    "bundlebd": "^4.0.0",
     "concurrently": "^8.0.1",
     "deepmerge": "^4.3.1",
     "esbuild": "^0.17.18",
