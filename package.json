@@ -9,7 +9,7 @@
     "discord:vite:watch": "vite build --watch --mode discord",
     "discord:vite:build": "vite build --mode discord",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
+    "tauri:dev": "RUSTFLAGS=\"--cfg tokio_unstable\" tauri dev",
     "tauri:build": "tauri build",
     "tauri:build-bindings": "cargo test export_bindings --manifest-path src-tauri/Cargo.toml",
     "bundlebd": "bundlebd",
