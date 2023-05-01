@@ -2,13 +2,14 @@ import {WS} from "./classes/WS";
 import {Settings} from "./classes/Settings";
 import {Utils} from "./classes/Utils";
 import {VideoManager} from "./classes/VideoManager";
-import {UserStore} from "./types/UserStore";
+import {CallStore} from "./types/CallStore";
+import {ChannelStore} from "./types/ChannelStore";
 
 export default class DiscordSourcePlugin {
     static videoManager: VideoManager;
     public static VoiceEngine = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVoiceEngine")).getVoiceEngine() as VoiceEngine;
-    public static VideoHandler = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byPrototypeFields("_handleVideoStreamId")).prototype;
-    public static UserStore = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getUser", "getCurrentUser")) as UserStore;
+    public static CallStore = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVideoParticipants", "getStreamParticipants")) as CallStore;
+    public static ChannelStore = BdApi.Webpack.getModule(BdApi.Webpack.Filters.byProps("getVoiceChannelId")) as ChannelStore;
 
     async start() {
         if (!Settings.getPort()) {
@@ -31,19 +32,10 @@ export default class DiscordSourcePlugin {
 
         DiscordSourcePlugin.videoManager = new VideoManager(ws);
 
-        BdApi.Patcher.after(DiscordSourcePlugin.name, DiscordSourcePlugin.VideoHandler, "_handleVideoStreamId", (_, [streamData]: [StreamData]) => {
-            if (streamData.streamId) {
-                DiscordSourcePlugin.videoManager.newVideoStream(streamData.streamId, streamData.userId);
-            } else {
-                DiscordSourcePlugin.videoManager.removeVideoStream(streamData.userId);
-            }
-        });
-
         Utils.log("Plugin started");
     }
 
     stop() {
-        BdApi.Patcher.unpatchAll(DiscordSourcePlugin.name);
         DiscordSourcePlugin.videoManager?.stop();
         Utils.log("Plugin stopped");
     }

@@ -11,12 +11,14 @@ interface DiscordStream {
     canvas?: HTMLCanvasElement;
     peerConnection?: WebRTCStream;
     userId: string;
+    nickname: string;
 }
 
 export class VideoManager {
     private ws: WS;
     private streams: Map<string, DiscordStream> = new Map();
     private updateInfoInterval: number;
+    private onCallStateChangeBinded = this.onCallStateChange.bind(this);
 
     constructor(ws: WS) {
         this.ws = ws;
@@ -25,51 +27,83 @@ export class VideoManager {
         this.ws.addEventListener("answer", (e) => this.onAnswerEvent(e));
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
 
+        DiscordSourcePlugin.CallStore.addChangeListener(this.onCallStateChangeBinded);
+
         //TODO: Make this configurable in settings
         this.updateInfoInterval = setInterval(() => {
             if (this.streams.size === 0) {
                 return;
             }
             this.updateInfo(Array.from(this.streams.keys()));
-        }, 60000) as any as number;
+        }, 15000) as any as number;
     }
 
-    public async newVideoStream(streamId: string, userId: string) {
-        const existingStream = this.streams.get(streamId);
+    async onCallStateChange() {
+        const currentChannelId = DiscordSourcePlugin.ChannelStore.getVoiceChannelId();
 
-        if (existingStream) {
+        if (!currentChannelId) {
+            Utils.log("No active channel, removing all streams");
+            this.removeVideoStream(Array.from(this.streams.keys())).then();
             return;
         }
 
-        let preview;
-        try {
-            preview = await this.getWebmPreview(streamId);
-        } catch (e) {
-            // ignoring
+        let streamParticipants = DiscordSourcePlugin.CallStore.getStreamParticipants(currentChannelId);
+        let videoParticipants = DiscordSourcePlugin.CallStore.getVideoParticipants(currentChannelId);
+
+        let participants = streamParticipants.concat(videoParticipants);
+
+        const newStreams = [];
+
+        const currentStreams = new Set(this.streams.keys());
+
+        for (const participant of participants) {
+            if (this.streams.has(participant.streamId)) {
+                currentStreams.delete(participant.streamId);
+                if (participant.localVideoDisabled) {
+                    Utils.log("Removing stream", participant.streamId, "because it's disabled from the discord client");
+                    await this.removeVideoStream([participant.streamId]);
+                    continue;
+                }
+                this.streams.get(participant.streamId).nickname = participant.userNick;
+                continue;
+            }
+
+            let preview;
+            try {
+                preview = await this.getWebmPreview(participant.streamId);
+            } catch (e) {
+                continue;
+            }
+
+            this.streams.set(participant.streamId, {
+                userId: participant.id,
+                nickname: participant.userNick,
+            });
+
+            newStreams.push({
+                streamId: participant.streamId,
+                userId: participant.id,
+                info: {
+                    nickname: participant.userNick,
+                    streamPreview: preview
+                },
+            });
         }
 
-        Utils.log("New video stream", streamId, "preview", preview);
+        if (currentStreams.size > 0) {
+            Utils.log("Removing streams", currentStreams, "because they are not in the call anymore");
+            await this.removeVideoStream(Array.from(currentStreams));
+        }
 
-        if (!preview) {
+        if (newStreams.length === 0) {
             return;
         }
-
-        this.streams.set(streamId, {
-            userId,
-        });
 
         this.ws.sendEvent({
-            type: "add",
-            detail: {
-                streamId,
-                userId,
-                info: {
-                    nickname: DiscordSourcePlugin.UserStore.getUser(userId).username,
-                    streamPreview: preview
-                }
-            }
+            type: "updateUserInfo",
+            detail: newStreams,
         });
-    }
+    };
 
     public async getWebmPreview(streamId: string): Promise<string> {
         let bitmap = await DiscordSourcePlugin.VoiceEngine.getNextVideoOutputFrame(streamId);
@@ -118,45 +152,32 @@ export class VideoManager {
                 streamId,
                 userId: stream.userId,
                 info: {
-                    nickname: DiscordSourcePlugin.UserStore.getUser(stream.userId).username,
-                    streamPreview: preview
+                    nickname: stream.nickname,
+                    streamPreview: preview,
                 }
             });
         }
 
         this.ws.sendEvent({
             type: "updateUserInfo",
-            detail: updateRequests
+            detail: updateRequests,
         });
     }
 
-    public async removeVideoStream(userId: string) {
-        //Finding stream id
-        let streamId = null;
-
-        for (const [key, value] of this.streams.entries()) {
-            if (value.userId === userId) {
-                streamId = key;
-                break;
-            }
-        }
-
-        if (!streamId) {
-            return;
-        }
-
-        this.streams.delete(streamId);
-
+    public async removeVideoStream(streamsId: string[]) {
+        Utils.log("Removing streams", streamsId)
         this.ws.sendEvent({
             type: "remove",
-            detail: {
-                streamId
-            }
+            detail: streamsId.map(streamId => {
+                this.streams.delete(streamId);
+                return {streamId};
+            }),
         });
     }
 
     public async stop() {
         clearInterval(this.updateInfoInterval);
+        DiscordSourcePlugin.CallStore.removeChangeListener(this.onCallStateChangeBinded);
         await this.ws.close();
         this.streams.forEach(stream => stream.peerConnection?.close());
     }
@@ -187,10 +208,8 @@ export class VideoManager {
                 return;
             }
             this.ws.sendEvent({
-                type: "ice",
-                detail: {
-                    streamId: event.detail.streamId,
-                    candidate: JSON.stringify(candidate.toJSON())
+                type: "ice", detail: {
+                    streamId: event.detail.streamId, candidate: JSON.stringify(candidate.toJSON())
                 }
             })
         });
@@ -198,10 +217,8 @@ export class VideoManager {
         const offer = await video.peerConnection.start();
 
         this.ws.sendEvent({
-            type: "offer",
-            detail: {
-                sdp: offer.sdp,
-                streamId: event.detail.streamId
+            type: "offer", detail: {
+                sdp: offer.sdp, streamId: event.detail.streamId
             }
         })
     }
@@ -214,8 +231,7 @@ export class VideoManager {
         }
         Utils.log("Received answer");
         stream.peerConnection.peerConnection.setRemoteDescription({
-            type: "answer",
-            sdp: event.detail.sdp
+            type: "answer", sdp: event.detail.sdp
         });
     }
 

@@ -4,6 +4,8 @@ import {nextTick, onMounted, onUnmounted, reactive, ref, Ref, watch} from "vue";
 import {watchArray} from "@vueuse/core";
 import {invoke} from "@tauri-apps/api/tauri";
 import type {VImg} from "vuetify/components/VImg";
+import {RemoveStreamEvent} from "../../src-tauri/bindings/RemoveStreamEvent";
+import {UpdateUserInfoEvent} from "../../src-tauri/bindings/UpdateUserInfoEvent";
 
 interface Connection {
     source: BoundedElement,
@@ -104,17 +106,15 @@ watchArray([sources, targets], handleRedraw, {
     flush: "post",
 })
 
-appWindow.listen("stream-added", (event) => {
-    let payload = event.payload as [string, Stream];
-    sources.set(payload[0], payload[1]);
-})
-
 appWindow.listen("user-info-update", (event) => {
-    let payload = event.payload as { streamId: string, userId: string, info: Stream }[];
+    let payload = event.payload as UpdateUserInfoEvent[];
     payload.forEach((update) => {
         const stream = sources.get(update.streamId);
         if (!stream) {
-            console.error("Received update for non-existing stream", update.streamId);
+            sources.set(update.streamId, {
+                nickname: update.info.nickname,
+                streamPreview: update.info.streamPreview,
+            })
             return;
         }
 
@@ -124,7 +124,10 @@ appWindow.listen("user-info-update", (event) => {
 })
 
 appWindow.listen("stream-removed", (event) => {
-    sources.delete(event.payload as string);
+    let payload = event.payload as RemoveStreamEvent[];
+    payload.forEach((update) => {
+        sources.delete(update.streamId);
+    });
 })
 
 appWindow.listen("web-added", (event) => {
