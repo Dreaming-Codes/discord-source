@@ -36,7 +36,7 @@ jobs:
           git add ./src-tauri/tauri.conf.json ./src-bd/plugin.json ./src-tauri/Cargo.toml
           git commit -m "version: ${{ github.event.inputs.tag }}"
           git tag ${{ github.event.inputs.tag }}
-          git push
+          git push origin "release/${{ github.event.inputs.tag }}" --tags
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
