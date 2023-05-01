@@ -4,10 +4,8 @@ use ts_rs::TS;
 #[ts(export)]
 #[serde(tag = "type", content = "detail")]
 pub enum MessageType {
-    #[serde(rename = "add")]
-    Add(AddStreamEvent),
     #[serde(rename = "remove")]
-    Remove(RemoveStreamEvent),
+    Remove(Vec<RemoveStreamEvent>),
     #[serde(rename = "ice")]
     ICE(ICEEvent),
     #[serde(rename = "answer")]
@@ -22,17 +20,6 @@ pub enum MessageType {
     Unlink,
     #[serde(rename = "updateUserInfo")]
     UpdateUserInfo(Vec<UpdateUserInfoEvent>)
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]
-#[ts(export)]
-pub struct AddStreamEvent {
-    #[serde(rename = "streamId")]
-    pub stream_id: String,
-    #[serde(rename = "userId")]
-    pub user_id: Option<String>,
-    #[serde(rename = "info")]
-    pub info: UserInfo
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, TS, Clone)]

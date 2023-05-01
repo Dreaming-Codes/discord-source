@@ -9,7 +9,7 @@ use serde::Serialize;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::RwLock;
 use tokio_tungstenite::tungstenite::handshake::server::{ErrorResponse, Request, Response};
-use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::tungstenite::{Error, Message};
 use tokio_tungstenite::WebSocketStream;
 use tracing::{error, info, warn};
 
@@ -124,34 +124,44 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                                 Status::Closed
                             }
                             Some(discord_connection) => {
-                                    let Some(Ok(msg)) = discord_connection.ws_stream.lock().await.next().await else {
-                                        warn!("An error occurred while reading from the discord connection, ignoring");
-                                        continue;
-                                    };
-                                    handle_message(msg)
+                                match discord_connection.ws_stream.lock().await.next().await {
+                                    None | Some(Err(_)) => {
+                                        Status::Closed
+                                    }
+                                    Some(Ok(msg)) => {
+                                        handle_message(msg)
+                                    }
+                                }
                             }
                         };
 
                         match status {
                             Status::Ok(event) => {
                                 match event {
-                                    MessageType::Add(stream) => {
-                                        info!("Added stream: {:?}", stream.stream_id);
-                                        let stream_info = DiscordStream {
-                                            stream_preview: stream.info.stream_preview,
-                                            nickname: stream.info.nickname,
-                                        };
-                                        discord_streams.write().await.insert(stream.stream_id.clone(), stream_info.clone());
-                                        window.emit("stream-added", (stream.stream_id, stream_info)).unwrap();
+                                    MessageType::Remove(streams) => {
+                                        info!("Removed stream: {:?}", streams);
+                                        for stream in &streams {
+                                            discord_streams.write().await.remove(&stream.stream_id.to_string());
+                                        }
+
+                                        window.emit("stream-removed", streams.clone()).unwrap();
                                     }
-                                    MessageType::Remove(stream) => {
-                                        info!("Removed stream: {:?}", stream);
-                                        window.emit("stream-removed", stream.stream_id.clone()).unwrap();
-                                        discord_streams.write().await.remove(&stream.stream_id);
-                                    }
-                                    MessageType::UpdateUserInfo(user_info) => {
-                                        info!("Updating user info: {:?}", user_info.iter().map(|info| info.stream_id.clone()).collect::<Vec<String>>());
-                                        window.emit("user-info-update", user_info).unwrap();
+                                    MessageType::UpdateUserInfo(user_infos) => {
+                                        for user_info in &user_infos {
+                                            let stream_info = DiscordStream {
+                                                stream_preview: user_info.info.stream_preview.clone(),
+                                                nickname: user_info.info.nickname.clone(),
+                                            };
+
+                                            let old_value = discord_streams.write().await.insert(user_info.stream_id.clone(), stream_info);
+
+                                            if old_value.is_none() {
+                                                info!("Added stream: {:?}", user_info.stream_id);
+                                            } else{
+                                                info!("Updated stream: {:?}", user_info.stream_id);
+                                            }
+                                        }
+                                        window.emit("user-info-update", user_infos).unwrap();
                                     }
                                     MessageType::ICE(ice) => {
                                         info!("ICE: {:?}", ice);
