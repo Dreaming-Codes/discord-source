@@ -44,26 +44,21 @@ impl BdSettings {
 pub async fn install_plugin(path: String) -> bool {
     info!("Installing plugin {}", path);
 
-    if let Ok(mut file) = tokio::fs::OpenOptions::new().write(true).read(true).append(false).create(true).open(path).await {
-        let mut old_plugin_string = String::new();
-        if let Err(e) = file.read_to_string(&mut old_plugin_string).await {
-            error!("Failed to read plugin {}", e);
-            return false;
-        }
-        let installed_version_md5 = md5::compute(old_plugin_string);
-        let latest_version_md5 = md5::compute(PLUGIN);
+    let file = tokio::fs::read_to_string(path.clone()).await.unwrap_or_default();
 
-        if installed_version_md5 == latest_version_md5 {
-            info!("Plugin is up to date");
-            return true;
-        }
+    let installed_version_md5 = md5::compute(file);
+    let latest_version_md5 = md5::compute(PLUGIN);
 
-        info!("Plugin is out of date, updating, old md5: {:?}, new md5: {:?}", installed_version_md5, latest_version_md5);
+    if installed_version_md5 == latest_version_md5 {
+        info!("Plugin is up to date");
+        return true;
+    }
 
-        if let Err(e) = file.write_all(PLUGIN.as_bytes()).await {
-            error!("Failed to write plugin: {}", e);
-            return false;
-        }
+    info!("Plugin is out of date, updating, old md5: {:?}, new md5: {:?}", installed_version_md5, latest_version_md5);
+
+    if let Err(e) = tokio::fs::write(path, PLUGIN).await {
+        error!("Failed to write plugin file: {}", e);
+        return false;
     }
 
     false
