@@ -155,7 +155,7 @@ async function handleRedraw() {
     console.log("Redrawing svg");
     await nextTick();
     connections.forEach((connection, index) => {
-        if (!document.body.contains(connection.source.element!) || !document.body.contains(connection.target.element!)) {
+        if (connection.target.element && (!document.body.contains(connection.source.element!) || !document.body.contains(connection.target.element!))) {
             connections.splice(index, 1);
             return;
         }
@@ -166,11 +166,14 @@ async function handleRedraw() {
             y: sourceRect.top + sourceRect.height / 2,
         };
 
-        const targetRect = connection.target.element?.getBoundingClientRect()!;
-        connection.target.connectionPoint = {
-            x: targetRect.left,
-            y: window.scrollY + targetRect.top + targetRect.height / 2,
-        };
+        //If the line is currently being drawn, use the mouse position as the target
+        if (connection.target.element) {
+            const targetRect = connection.target.element?.getBoundingClientRect()!;
+            connection.target.connectionPoint = {
+                x: targetRect.left,
+                y: window.scrollY + targetRect.top + targetRect.height / 2,
+            };
+        }
     })
 }
 
