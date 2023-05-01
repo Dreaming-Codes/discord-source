@@ -342,6 +342,7 @@ function getColor(id: number) {
 
 .source-target-label {
   background-color: rgba(0, 0, 0, 0.75);
+  @extend .text-white;
   @extend .pa-1;
   @extend .text-body-2;
   @extend .text-center;
