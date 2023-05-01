@@ -46,7 +46,16 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get release tag
+        if: github.ref == 'refs/heads/master'
+        id: get_release_tag
+        uses: actions-ecosystem/action-regex-match@v2
+        with:
+          text: ${{ github.event.head_commit.message }}
+          regex: '(?<=release: )\d+.\d+.\d+'
+
       - name: Update version
+        if: steps.get_release_tag.outputs.match == ''
         run: pnpm run setVersion $(git describe --tags)
 
       - uses: Dreaming-Codes/tauri-build@next
@@ -60,21 +69,13 @@ jobs:
           name: "artifacts-${{ matrix.platform }}"
           path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
 
-      - name: Get release tag
-        if: github.ref == 'refs/heads/master'
-        id: get_release_tag
-        shell: bash
-        run: |
-          TAG=$(git tag --points-at HEAD)
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-
       - name: Upload release
-        if: github.ref == 'refs/heads/master' && steps.get_release_tag.outputs.tag != ''
+        if: github.ref == 'refs/heads/master' && steps.get_release_tag.outputs.match != ''
         uses: ncipollo/release-action@v1
         with:
           artifacts: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
           draft: true
-          tag: ${{ steps.get_tag.outputs.tag }}
+          tag: ${{ steps.get_release_tag.outputs.match }}
           commit: ${{ github.event.workflow_run.head_sha }}
           makeLatest: true
           updateOnlyUnreleased: true

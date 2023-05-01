@@ -1,4 +1,4 @@
-name: Build
+name: Release
 on:
   workflow_dispatch:
     inputs:
@@ -7,6 +7,7 @@ on:
         required: true
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   build:
@@ -27,11 +28,13 @@ jobs:
       - name: Update version
         run: pnpm run setVersion ${{ github.event.inputs.tag }}
 
-      - name: Commit & Push new version
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add ./src-tauri/tauri.conf.json ./src-bd/plugin.json ./src-tauri/Cargo.toml
-          git commit -m "version: ${{ github.event.inputs.tag }}"
-          git tag ${{ github.event.inputs.tag }}
-          git push
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          commit-message: 'release: ${{ github.event.inputs.tag }}'
+          labels: 'release'
+          reviewers: 'Dreaming-Codes'
+          title: 'release: ${{ github.event.inputs.tag }}'
+          body: ''
+          base: 'master'
+          branch: 'release/${{ github.event.inputs.tag }}'
