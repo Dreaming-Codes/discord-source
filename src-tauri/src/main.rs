@@ -79,6 +79,11 @@ pub const DS_INVITE: &str = "https://discord.gg/MehYjUJGpA";
 
 #[tokio::main]
 async fn main() {
+    #[cfg(debug_assertions)]
+    {
+        console_subscriber::init();
+    }
+
     init_logging();
 
     info!("Checking license...");
