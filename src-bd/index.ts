@@ -44,7 +44,7 @@ export default class DiscordSourcePlugin {
 
     stop() {
         BdApi.Patcher.unpatchAll(DiscordSourcePlugin.name);
-        if (DiscordSourcePlugin.videoManager) DiscordSourcePlugin.videoManager.stop();
+        DiscordSourcePlugin.videoManager?.stop();
         Utils.log("Plugin stopped");
     }
 }
