@@ -118,12 +118,14 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                     loop {
                         let discord_connection = discord_connection.clone();
 
-                        let status = match discord_connection.write().await.as_ref() {
+                        let status = match discord_connection.read().await.as_ref() {
                             None => {
+                                warn!("Discord connection is None, but we're still trying to read from it, stopping loop");
                                 Status::Closed
                             }
                             Some(discord_connection) => {
                                     let Some(Ok(msg)) = discord_connection.ws_stream.lock().await.next().await else {
+                                        warn!("An error occurred while reading from the discord connection, ignoring");
                                         continue;
                                     };
                                     handle_message(msg)
