@@ -4,8 +4,6 @@ import {nextTick, onMounted, onUnmounted, reactive, ref, Ref, watch} from "vue";
 import {watchArray} from "@vueuse/core";
 import {invoke} from "@tauri-apps/api/tauri";
 import type {VImg} from "vuetify/components/VImg";
-import {RemoveStreamEvent} from "../../src-tauri/bindings/RemoveStreamEvent";
-import {UpdateUserInfoEvent} from "../../src-tauri/bindings/UpdateUserInfoEvent";
 
 interface Connection {
     source: BoundedElement,
@@ -107,7 +105,7 @@ watchArray([sources, targets], handleRedraw, {
 })
 
 appWindow.listen("user-info-update", (event) => {
-    let payload = event.payload as UpdateUserInfoEvent[];
+    let payload = event.payload as { streamId: string, userId: string, info: { nickname: string, streamPreview: string } }[];
     payload.forEach((update) => {
         const stream = sources.get(update.streamId);
         if (!stream) {
@@ -124,7 +122,7 @@ appWindow.listen("user-info-update", (event) => {
 })
 
 appWindow.listen("stream-removed", (event) => {
-    let payload = event.payload as RemoveStreamEvent[];
+    let payload = event.payload as  { streamId: string }[];
     payload.forEach((update) => {
         sources.delete(update.streamId);
     });
