@@ -5,7 +5,7 @@ import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
 import {ICEEvent} from "../../src-tauri/bindings/ICEEvent";
 import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
 import DiscordSourcePlugin from "../index";
-import { UpdateUserInfoEvent } from "../../src-tauri/bindings/UpdateUserInfoEvent";
+import {UpdateUserInfoEvent} from "../../src-tauri/bindings/UpdateUserInfoEvent";
 
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
@@ -145,12 +145,14 @@ export class VideoManager {
             return;
         }
 
+        this.streams.delete(streamId);
+
         this.ws.sendEvent({
             type: "remove",
             detail: {
                 streamId
             }
-        })
+        });
     }
 
     public async stop() {
