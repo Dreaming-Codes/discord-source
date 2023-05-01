@@ -5,7 +5,7 @@ import {CaptureEvent} from "../../src-tauri/bindings/CaptureEvent";
 import {ICEEvent} from "../../src-tauri/bindings/ICEEvent";
 import {AnswerOfferEvent} from "../../src-tauri/bindings/AnswerOfferEvent";
 import DiscordSourcePlugin from "../index";
-import { UpdateUserInfoEvent } from "../../src-tauri/bindings/UpdateUserInfoEvent";
+import {UpdateUserInfoEvent} from "../../src-tauri/bindings/UpdateUserInfoEvent";
 
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
@@ -26,7 +26,10 @@ export class VideoManager {
         this.ws.addEventListener("ice", (e) => this.onIceCandidateEvent(e));
 
         //TODO: Make this configurable in settings
-        this.updateInfoInterval = setInterval(()=>{
+        this.updateInfoInterval = setInterval(() => {
+            if (this.streams.size === 0) {
+                return;
+            }
             this.updateInfo(Array.from(this.streams.keys()));
         }, 60000) as any as number;
     }
@@ -142,12 +145,14 @@ export class VideoManager {
             return;
         }
 
+        this.streams.delete(streamId);
+
         this.ws.sendEvent({
             type: "remove",
             detail: {
                 streamId
             }
-        })
+        });
     }
 
     public async stop() {

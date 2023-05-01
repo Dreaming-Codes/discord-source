@@ -1,5 +1,5 @@
-import { TypedEventTarget } from 'typescript-event-target';
-import { MessageType } from "../../src-tauri/bindings/MessageType";
+import {TypedEventTarget} from 'typescript-event-target';
+import {MessageType} from "../../src-tauri/bindings/MessageType";
 import {Utils} from "./Utils";
 import {MessageEventMap} from "../../shared/MappedMessageType";
 
@@ -12,11 +12,12 @@ export class WS extends TypedEventTarget<MessageEventMap> {
         super();
         this.port = port;
     }
+
     /**
      * Wait for the websocket to connect
      */
     public async connect(): Promise<boolean> {
-        if(this.isClosed) return false;
+        if (this.isClosed) return false;
 
         this.ws = new WebSocket(`ws://localhost:${this.port}/discord`);
 
@@ -32,15 +33,16 @@ export class WS extends TypedEventTarget<MessageEventMap> {
             });
         }) as boolean;
 
-        if(connectionState) {
+        if (connectionState) {
             this.ws.addEventListener("message", (e) => this.eventHandler(e));
 
-            this.ws.addEventListener("close", ()=>{
-                Utils.log("Connection to Discord Source lost, retrying...");
+            this.ws.addEventListener("close", () => {
+                if (this.isClosed) return;
 
+                Utils.log("Connection to Discord Source lost, retrying...");
                 this.connect();
             })
-        }else{
+        } else {
             return this.connect();
         }
 
