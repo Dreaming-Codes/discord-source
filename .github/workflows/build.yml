@@ -46,7 +46,16 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Get release tag
+        if: github.ref == 'refs/heads/master'
+        id: get_release_tag
+        uses: actions-ecosystem/action-regex-match@v2
+        with:
+          text: ${{ github.event.head_commit.message }}
+          regex: '(?<=release: )\d+.\d+.\d+'
+
       - name: Update version
+        if: steps.get_release_tag.outputs.match == ''
         run: pnpm run setVersion $(git describe --tags)
 
       - uses: Dreaming-Codes/tauri-build@next
@@ -59,14 +68,6 @@ jobs:
         with:
           name: "artifacts-${{ matrix.platform }}"
           path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
-
-      - name: Get release tag
-        if: github.ref == 'refs/heads/master'
-        id: get_release_tag
-        uses: actions-ecosystem/action-regex-match@v2
-        with:
-          text: ${{ github.event.head_commit.message }}
-          regex: '(?<=release: )\d+.\d+.\d+'
 
       - name: Upload release
         if: github.ref == 'refs/heads/master' && steps.get_release_tag.outputs.match != ''
