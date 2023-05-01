@@ -65,7 +65,8 @@ jobs:
         id: get_release_tag
         shell: bash
         run: |
-          TAG=$(git tag --points-at HEAD)
+          COMMIT_NAME=$(git log -1 --pretty=%B)
+          TAG=$(echo "$COMMIT_NAME" | grep -oP '(?<=release: )\d+.\d+.\d+')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Upload release
