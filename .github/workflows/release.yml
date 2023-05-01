@@ -20,6 +20,9 @@ jobs:
         with:
           version: latest
 
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Sync node version
         uses: actions/setup-node@v3
         with:
@@ -27,6 +30,9 @@ jobs:
 
       - name: Update version
         run: pnpm run setVersion ${{ github.event.inputs.tag }}
+
+      - name: Update version in Cargo.lock
+        run: cargo generate-lockfile --offline
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
