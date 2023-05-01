@@ -84,7 +84,10 @@ async fn main() {
         console_subscriber::init();
     }
 
-    init_logging();
+    #[cfg(not(debug_assertions))]
+    {
+        init_logging();
+    }
 
     info!("Checking license...");
     // IMPORTANT:
