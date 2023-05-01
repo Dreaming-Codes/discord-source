@@ -34,7 +34,7 @@ jobs:
           commit-message: 'release: ${{ github.event.inputs.tag }}'
           labels: 'release'
           reviewers: 'Dreaming-Codes'
-          title: 'Release ${{ github.event.inputs.tag }}'
+          title: 'release: ${{ github.event.inputs.tag }}'
           body: ''
           base: 'master'
           branch: 'release/${{ github.event.inputs.tag }}'
