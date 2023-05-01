@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -44,7 +46,10 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - uses: JonasKruckenberg/tauri-build@v1
+      - name: Update version
+        run: pnpm run setVersion $(git describe --tags)
+
+      - uses: Dreaming-Codes/tauri-build@next
         id: tauri_build
         env:
           TAURI_KEY_PASSWORD: ''
@@ -54,3 +59,22 @@ jobs:
         with:
           name: "artifacts-${{ matrix.platform }}"
           path: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
+
+      - name: Get release tag
+        if: github.ref == 'refs/heads/master'
+        id: get_release_tag
+        run: |
+          TAG=$(git tag --points-at HEAD)
+          echo "::set-output name=tag::$TAG"
+
+      - name: Upload release
+        if: github.ref == 'refs/heads/master' && steps.get_release_tag.outputs.tag != ''
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "${{ join(fromJSON(steps.tauri_build.outputs.artifacts), '\n') }}"
+          draft: true
+          tag: ${{ steps.get_tag.outputs.tag }}
+          commit: ${{ github.event.workflow_run.head_sha }}
+          makeLatest: true
+          updateOnlyUnreleased: true
+          allowUpdates: true
