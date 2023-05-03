@@ -19,7 +19,7 @@
     "nv": "node --version",
     "setVersion": "node ./scripts/setVersion.js",
     "clean": "rimraf node_modules dist-bd dist src-tauri/dist src-tauri/target src-tauri/bindings",
-    "postinstall": "mkdirp ./src-tauri/dist/web/ && nodetouch ./src-tauri/dist/web/index.html && mkdirp ./dist/"
+    "postinstall": "mkdirp ./src-tauri/dist/web/ && nodetouch ./src-tauri/dist/web/index.html && mkdirp ./dist/ && mkdirp ./dist-bd/ && nodetouch ./dist-bd/DiscordSourcePlugin.plugin.js"
   },
   "dependencies": {
     "@mdi/font": "^7.2.96",
