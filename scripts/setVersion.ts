@@ -24,3 +24,19 @@ fs.writeFileSync("./src-bd/plugin.json", pluginJson);
 let cargoToml = fs.readFileSync("./src-tauri/Cargo.toml", "utf8");
 cargoToml = cargoToml.replace(/version = ".*"/, `version = "${version}"`);
 fs.writeFileSync("./src-tauri/Cargo.toml", cargoToml);
+
+//Updating ./src-tauri/Cargo.lock
+let cargoLock = fs.readFileSync("./src-tauri/Cargo.lock", "utf8");
+cargoLock = updateVersion(cargoLock, "discord-source", version);
+fs.writeFileSync("./src-tauri/Cargo.lock", cargoLock);
+
+
+function updateVersion(content: string, packageName: string, newVersion: string): string {
+    const packageRegex = /\[\[package]]\s*name\s*=\s*"([^"]+)"\s*version\s*=\s*"([\d.]+)"/g;
+    return content.replace(packageRegex, (match, name) => {
+        if (name === packageName) {
+            return `[[package]]\nname = "${name}"\nversion = "${newVersion}"`;
+        }
+        return match;
+    });
+}
