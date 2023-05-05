@@ -16,6 +16,14 @@
     ],
     "skipLibCheck": true
   },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "allowSyntheticDefaultImports": true,
+      "composite": true
+    }
+  },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
@@ -31,6 +39,9 @@
     },
     {
       "path": "./tsconfig.tauri.json"
+    },
+    {
+      "path": "./tsconfig.scripts.json"
     }
   ]
 }
