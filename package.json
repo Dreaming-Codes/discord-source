@@ -1,7 +1,7 @@
 {
   "name": "discord-source",
   "private": true,
-  "version": "0.0.13",
+  "version": "0.0.14",
   "scripts": {
     "vite": "vite",
     "vite:dev": "vite",
