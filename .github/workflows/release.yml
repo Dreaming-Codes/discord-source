@@ -31,9 +31,6 @@ jobs:
       - name: Update version
         run: pnpm run setVersion ${{ github.event.inputs.tag }}
 
-      - name: Update version in Cargo.lock
-        run: cargo generate-lockfile --offline --manifest-path src-tauri/Cargo.toml
-
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
         with:
