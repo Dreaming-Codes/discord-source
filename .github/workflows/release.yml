@@ -27,6 +27,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 'current'
+          cache: 'pnpm'
+
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Update version
         run: pnpm run setVersion ${{ github.event.inputs.tag }}
