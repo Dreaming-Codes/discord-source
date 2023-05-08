@@ -99,7 +99,7 @@ fn is_discord(cmdline: &str) -> bool {
     DISCORD_EXE_NAMES.iter().any(|exe_name| !cmdline.to_lowercase().contains("discord-source") && cmdline.to_lowercase().contains(exe_name))
 }
 
-fn kill_discord() {
+pub fn kill_discord() {
     info!("Killing Discord");
 
     let processes = SYS.processes();
