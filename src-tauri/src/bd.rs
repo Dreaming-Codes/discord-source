@@ -5,6 +5,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::{error, info};
 
 use crate::DEFAULT_WS_PORT;
+use crate::ds_installer::kill_discord;
 
 const PLUGIN: &str = include_str!("../../dist-bd/DiscordSourcePlugin.plugin.js");
 
@@ -61,7 +62,11 @@ pub async fn install_plugin(path: String) -> bool {
         return false;
     }
 
-    false
+    kill_discord();
+
+    info!("Plugin updated");
+
+    true
 }
 
 #[tauri::command]
