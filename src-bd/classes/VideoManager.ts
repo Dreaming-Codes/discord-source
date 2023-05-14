@@ -10,6 +10,7 @@ import {UpdateUserInfoEvent} from "../../src-tauri/bindings/UpdateUserInfoEvent"
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
     peerConnection?: WebRTCStream;
+    mutationObserver?: MutationObserver;
     userId: string;
     nickname: string;
 }
@@ -202,7 +203,7 @@ export class VideoManager {
         });
 
         //Use mutation observer to detect the canvas with id "media-engine-video-<streamId>" is removed from the DOM and resubscribe to the video sink to prevent the video from freezing when the user switches channels or zoom in/out
-        const observer = new MutationObserver((mutations) => {
+        video.mutationObserver = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.type === "childList" && mutation.removedNodes.length > 0) {
                     mutation.removedNodes.forEach((node) => {
@@ -218,7 +219,7 @@ export class VideoManager {
             });
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        video.mutationObserver.observe(document.body, { childList: true, subtree: true });
 
         video.peerConnection = new WebRTCStream(video.canvas.captureStream(30));
 
@@ -261,6 +262,7 @@ export class VideoManager {
             return;
         }
         Utils.log(`Received end capture request for stream ${event.detail.streamId}!`)
+        stream.mutationObserver?.disconnect();
         stream.peerConnection.close();
         stream.peerConnection = undefined;
         DiscordSourcePlugin.VoiceEngine.removeVideoOutputSink(stream.canvas.id, event.detail.streamId);
