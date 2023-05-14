@@ -103,7 +103,7 @@ impl<R: tauri::Runtime> WebSocketServer<R> {
                 {
                     let mut discord_connection = discord_connection.write().await;
                     if discord_connection.is_some() {
-                        discord_connection.as_mut().unwrap().ws_sink.lock().await.close().await.unwrap();
+                        let _ = discord_connection.as_mut().unwrap().ws_sink.lock().await.close().await;
                     }
                     let ws_stream_split = ws_stream.split();
                     *discord_connection = Some(DiscordSplittedConnection {
