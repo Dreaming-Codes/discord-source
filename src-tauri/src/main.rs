@@ -200,7 +200,7 @@ async fn main() {
                     let _ = web_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
                         &MessageType::Unlink
                     ).unwrap())).await;
-                    let stream_id = web_connection.linked_stream.read().as_ref().expect("Trying to close a not connected stream").clone();
+                    let stream_id = web_connection.linked_stream.write().take().expect("Trying to close a not connected stream");
                     let discord_connection = discord_connection.read().await;
                     let discord_connection = discord_connection.as_ref().unwrap();
                     let _ =  discord_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
