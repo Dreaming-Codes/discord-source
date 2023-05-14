@@ -10,6 +10,7 @@ import {UpdateUserInfoEvent} from "../../src-tauri/bindings/UpdateUserInfoEvent"
 interface DiscordStream {
     canvas?: HTMLCanvasElement;
     peerConnection?: WebRTCStream;
+    mutationObserver?: MutationObserver;
     userId: string;
     nickname: string;
 }
@@ -201,6 +202,25 @@ export class VideoManager {
             video.canvas.height = height;
         });
 
+        //Use mutation observer to detect the canvas with id "media-engine-video-<streamId>" is removed from the DOM and resubscribe to the video sink to prevent the video from freezing when the user switches channels or zoom in/out
+        video.mutationObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === "childList" && mutation.removedNodes.length > 0) {
+                    mutation.removedNodes.forEach((node) => {
+                        const element = node as HTMLElement;
+                        if (element.id === "media-engine-video-" + event.detail.streamId) {
+                            DiscordSourcePlugin.VoiceEngine.addVideoOutputSink(video.canvas.id, event.detail.streamId, (width, height) => {
+                                video.canvas.width = width;
+                                video.canvas.height = height;
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        video.mutationObserver.observe(document.body, { childList: true, subtree: true });
+
         video.peerConnection = new WebRTCStream(video.canvas.captureStream(30));
 
         video.peerConnection.peerConnection.addEventListener("icecandidate", ({candidate}) => {
@@ -242,6 +262,7 @@ export class VideoManager {
             return;
         }
         Utils.log(`Received end capture request for stream ${event.detail.streamId}!`)
+        stream.mutationObserver?.disconnect();
         stream.peerConnection.close();
         stream.peerConnection = undefined;
         DiscordSourcePlugin.VoiceEngine.removeVideoOutputSink(stream.canvas.id, event.detail.streamId);
