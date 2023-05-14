@@ -179,7 +179,10 @@ async function handleRedraw() {
 }
 
 function mouseOver(e: MouseEvent) {
-    const element = (e.target as HTMLElement).parentElement!;
+    let element = (e.target as HTMLElement).parentElement!.parentElement!;
+    if(!element.dataset.id) {
+        element = element.parentElement!;
+    }
     const rect = element.getBoundingClientRect();
     hoveredElement = {
         element,
@@ -319,7 +322,6 @@ function getColor(id: number) {
                      @mouseover="mouseOver"
                      @dragstart.prevent>
                     <v-img
-                            :data-id="key"
                             :src="'https://picsum.photos/1920/1080?' + key"
                             alt=""
                             @load="imgLoad">
