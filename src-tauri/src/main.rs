@@ -179,11 +179,15 @@ async fn main() {
                 let discord_connection = discord_connection.clone();
                 tauri::async_runtime::spawn(async move {
                     let web_connections = web_connections.write().await;
-                    let web_connection = web_connections.get(&data.target).unwrap();
+                    let Some(web_connection) = web_connections.get(&data.target) else {
+                        return;
+                    };
                     let _ = web_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
                         &MessageType::Unlink
                     ).unwrap())).await;
-                    let stream_id = web_connection.linked_stream.write().take().expect("Trying to close a not connected stream");
+                    let Some(stream_id) = web_connection.linked_stream.write().take() else {
+                        return;
+                    };
                     let discord_connection = discord_connection.read().await;
                     let discord_connection = discord_connection.as_ref().unwrap();
                     let _ =  discord_connection.ws_sink.lock().await.send(Message::Text(serde_json::to_string(
