@@ -4,7 +4,6 @@ import {nextTick, onMounted, onUnmounted, reactive, ref, Ref, watch} from "vue";
 import {watchArray} from "@vueuse/core";
 import {invoke} from "@tauri-apps/api/tauri";
 import type {VImg} from "vuetify/components/VImg";
-import {SharedUtils} from "../../shared/SharedUtils";
 
 interface Connection {
   source: BoundedElement,
@@ -277,8 +276,6 @@ function startDrawing(e: DragEvent) {
           }
 
           console.log("Unlinking stream", sourceId, "from", targetId);
-
-          //await SharedUtils.delay(1000)
         }
 
         // Create a new connection
