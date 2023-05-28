@@ -19,7 +19,7 @@ use tracing_subscriber::layer::SubscriberExt;
 
 use crate::bd::{BdSettings, get_bd_path, install_plugin};
 use crate::ds_installer::configure_open_asar;
-use crate::license::check_license;
+use crate::license::{check_license, open_ds_invite};
 use crate::web::WebServer;
 use crate::ws::{DiscordConnection, DiscordStream, DiscordStreams, WebConnections, WebSocketServer};
 use crate::ws::message::{CaptureEvent, MessageType};
@@ -75,28 +75,11 @@ struct LinkEvent {
 }
 
 pub const DS_APP_ID: discord_sdk::AppId = 1093500259235274763;
-pub const DS_INVITE: &str = "https://discord.gg/MehYjUJGpA";
+pub const DS_INVITE: &str = "https://discord.com/invite/MehYjUJGpA";
 
 #[tokio::main]
 async fn main() {
     init_logging();
-
-    info!("Checking license...");
-    // IMPORTANT:
-    // Before using the Software,
-    // please ensure
-    // that you have read and understood the terms and conditions of the License Agreement
-    // provided in the LICENSE.md file.
-    // In particular,
-    // note that the license key check with my servers must be left in place
-    // and functioning properly for any distribution of the Software.
-    // Therefore,
-    // it is essential that you call the function check_license()
-    // before proceeding to use the Software.
-    // Any attempt to remove this check or redistribute the Software without the license key check may result in a violation of the license agreement.
-    check_license().await;
-    info!("License check complete");
-
     info!("Configuring Open ASAR...");
     configure_open_asar().await;
     info!("Configured Open ASAR");
@@ -151,7 +134,7 @@ async fn main() {
             }
             _ => {}
         })
-        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config, get_streams, get_targets])
+        .invoke_handler(tauri::generate_handler![bd::get_bd_path, bd::install_plugin, get_config, get_streams, get_targets, open_ds_invite, check_license])
         .setup(|app| {
             let discord_streams: tauri::State<'_, DiscordStreams> = app.state();
             let web_connections: tauri::State<'_, WebConnections> = app.state();
@@ -228,7 +211,6 @@ async fn main() {
         .run(|_app_handle, event| match event {
             RunEvent::WindowEvent { event, label, .. } => {
                 if label == "main" {
-                    //TODO: Add a way to reinitialize the window instead of just hiding it
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                         api.prevent_close();
                         _app_handle.windows().get("main").unwrap().hide().expect("Failed to hide window");

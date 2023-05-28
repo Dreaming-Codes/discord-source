@@ -73,7 +73,6 @@ const DISCORD_SETTINGS_PATH: [&str; 6] = [
     "~\\AppData\\Roaming\\discordcanary\\settings.json"
 ];
 
-//TODO: Check if those are correct paths
 #[cfg(target_os = "macos")]
 const DISCORD_SETTINGS_PATH: [&str; 3] = [
     "~/Library/Application Support/discord/settings.json",
@@ -81,7 +80,6 @@ const DISCORD_SETTINGS_PATH: [&str; 3] = [
     "~/Library/Application Support/discordcanary/settings.json"
 ];
 
-//TODO: Add the missing paths
 #[cfg(target_os = "linux")]
 const DISCORD_SETTINGS_PATH: [&str; 3] = [
     "~/.config/discord/settings.json",
