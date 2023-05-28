@@ -263,14 +263,18 @@ function startDrawing(e: DragEvent) {
 
           if (existingConnectionSource.length > 1) {
             connections.splice(connections.indexOf(existingConnectionSource[0]), 1);
+
+            await appWindow.emit("unlink-stream", {
+              target: existingConnectionSource[0].target.element?.dataset.id as string,
+            });
           }
           if (existingConnectionTarget.length > 1) {
             connections.splice(connections.indexOf(existingConnectionTarget[0]), 1);
-          }
 
-          await appWindow.emit("unlink-stream", {
-            target: targetId,
-          });
+            await appWindow.emit("unlink-stream", {
+              target: targetId,
+            });
+          }
 
           console.log("Unlinking stream", sourceId, "from", targetId);
 
