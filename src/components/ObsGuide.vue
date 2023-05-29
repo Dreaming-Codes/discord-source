@@ -21,7 +21,10 @@ const dialog = ref(false);
                         To add the first target you need to manually add it to the scene. To do this, add the following link as browser source to your scene: http://localhost:4651/name you can replace name with any name you want. This will create a new target with the name you specified.<br>
                         <span class="text-red">Remember to remove any default custom CSS.</span><br>
                         For width and height you can use any value you want, but it is recommended to use 1920x1080 since most discord webcam and streams are 1920x1080.<br>
-                        For fps you should use 30 since discord webcam are 30 fps.
+                        For fps you should use 30 since discord webcam are 30 fps.<br>
+                        <span class="text-red">Set page permission to full access</span>
+                        <span class="text-red">Tick Shutdown source when not visible</span>
+                        <v-img src="@/assets/obsExample.png"/>
                     </v-card-text>
                     <v-card-actions>
                         <v-btn color="primary" block @click="dialog = false">Okay</v-btn>
