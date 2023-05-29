@@ -30,6 +30,9 @@ devDependencies:
   '@types/node':
     specifier: ^18.16.1
     version: 18.16.1
+  '@types/obs-studio':
+    specifier: ^2.17.0
+    version: 2.17.0
   '@types/webfontloader':
     specifier: ^1.6.35
     version: 1.6.35
@@ -2029,6 +2032,10 @@ packages:
 
   /@types/node@18.16.1:
     resolution: {integrity: sha512-DZxSZWXxFfOlx7k7Rv4LAyiMroaxa3Ly/7OOzZO8cBNho0YzAi4qlbrx8W27JGqG57IgR/6J7r+nOJWw6kcvZA==}
+
+  /@types/obs-studio@2.17.0:
+    resolution: {integrity: sha512-/xHSAZI/4mUbXkIpZp1t7INYmgfa6GoBRr47NZR4VbIIDPHdosTeg04HfKM8/qMPd4uVtxUZQ78Wd78cfRUk/A==}
+    dev: true
 
   /@types/parse-json@4.0.0:
     resolution: {integrity: sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==}
