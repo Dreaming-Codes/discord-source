@@ -1,87 +1,66 @@
 import {WS} from "./WS";
 
-(async ()=>{
-    if(window.obsstudio) {
-        const level = await new Promise<number>((resolve) => {
-            window.obsstudio.getControlLevel(resolve)
-        });
-
-        if(level < 5) {
-            //add a red warning to the top of the page
-            const warning = document.createElement("div");
-            warning.style.backgroundColor = "red";
-            warning.style.color = "white";
-            warning.style.padding = "10px";
-            warning.style.textAlign = "center";
-            warning.style.fontSize = "20vmin";
-            warning.innerText = "You must set Page Permission to full access!";
-            document.body.prepend(warning);
-            return;
-        }
-    }
-
-    const video = document.getElementById('video') as HTMLVideoElement;
+const video = document.getElementById('video') as HTMLVideoElement;
 
 // @ts-ignore
-    const ws = new WS(`ws://127.0.0.1:${window.ws_port}/${window.location.pathname.substring(1)}`);
+const ws = new WS(`ws://127.0.0.1:${window.ws_port}/${window.location.pathname.substring(1)}`);
 
-    let peerConnection: RTCPeerConnection;
+let peerConnection: RTCPeerConnection;
 
-    function resetPeerConnection() {
-        if(peerConnection) {
-            peerConnection.close();
-        }
-
-        peerConnection = new RTCPeerConnection();
-
-        peerConnection.addEventListener("track", (event) => {
-            console.log("Received track!");
-            video.srcObject = new MediaStream([event.track]);
-        })
-
-        peerConnection.addEventListener("icecandidate", ({candidate}) => {
-            if (!candidate) {
-                return;
-            }
-
-            ws.sendEvent({
-                type: "ice", detail: {
-                    candidate: JSON.stringify(candidate.toJSON())
-                }
-            });
-        })
+function resetPeerConnection() {
+    if(peerConnection) {
+        peerConnection.close();
     }
 
+    peerConnection = new RTCPeerConnection();
 
-    ws.addEventListener("ice", (event) => {
-        console.log("Received ice!");
-        peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
-    });
+    peerConnection.addEventListener("track", (event) => {
+        console.log("Received track!");
+        video.srcObject = new MediaStream([event.track]);
+    })
 
-    ws.addEventListener("offer", async (event) => {
-        console.log("Received offer!");
-        await peerConnection.setRemoteDescription({
-            type: "offer",
-            sdp: event.detail.sdp
-        });
-
-        const answer = await peerConnection.createAnswer();
-        //answer.sdp = SharedUtils.forceH264Support(answer.sdp);
-        //answer.sdp = SharedUtils.forceVideoBandwidth(answer.sdp, 90000);
-        await peerConnection.setLocalDescription(answer);
+    peerConnection.addEventListener("icecandidate", ({candidate}) => {
+        if (!candidate) {
+            return;
+        }
 
         ws.sendEvent({
-            type: "answer", detail: {
-                sdp: answer.sdp
+            type: "ice", detail: {
+                candidate: JSON.stringify(candidate.toJSON())
             }
-        })
+        });
+    })
+}
+
+
+ws.addEventListener("ice", (event) => {
+    console.log("Received ice!");
+    peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(event.detail.candidate)));
+});
+
+ws.addEventListener("offer", async (event) => {
+    console.log("Received offer!");
+    await peerConnection.setRemoteDescription({
+        type: "offer",
+        sdp: event.detail.sdp
     });
 
-    ws.addEventListener("unlink", async () => {
-        resetPeerConnection();
+    const answer = await peerConnection.createAnswer();
+    //answer.sdp = SharedUtils.forceH264Support(answer.sdp);
+    //answer.sdp = SharedUtils.forceVideoBandwidth(answer.sdp, 90000);
+    await peerConnection.setLocalDescription(answer);
 
-        video.srcObject = null;
-    });
+    ws.sendEvent({
+        type: "answer", detail: {
+            sdp: answer.sdp
+        }
+    })
+});
 
+ws.addEventListener("unlink", async () => {
     resetPeerConnection();
-})();
+
+    video.srcObject = null;
+});
+
+resetPeerConnection();
