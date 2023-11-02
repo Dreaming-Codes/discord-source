@@ -1,3 +1,5 @@
+# this project is on hold
+
 # Discord Source
 
 https://discord.gg/MehYjUJGpA
